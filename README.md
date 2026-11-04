@@ -24,18 +24,20 @@ flowchart LR
 
 ## 진행 현황
 
-상태: ⬜ 미작업 · 🟨 시안 · ✅ 확정
+단계마다 **HTML 파일 하나**에 그 단계의 화면 흐름을 모두 담습니다. "포함 화면"은 각 단계 README의 체크 표에서 ✅로 바꾼 화면 수입니다.
 
-| 단계 | 폴더 | 화면 | 사용자 | 시안 | 영상 |
-|---|---|---|---|---|---|
-| 01 | [01_tester-profile](01_tester-profile/) | 테스터 프로필 등록 | 테스터 | ⬜ | ⬜ |
-| 02 | [02_request-create](02_request-create/) | 의뢰 작성 | 개발사(기관 담당자) | ⬜ | ⬜ |
-| 03 | [03_group-proposal](03_group-proposal/) | 집단 제시·선택 | 개발사 | ⬜ | ⬜ |
-| 04 | [04_offer-accept](04_offer-accept/) | 참여 제안·수락 | 테스터 | ⬜ | ⬜ |
-| 05 | [05_test-feedback](05_test-feedback/) | 테스트 참여·피드백 제출 | 테스터 | ⬜ | ⬜ |
-| 06 | [06_progress-result](06_progress-result/) | 진행 현황·결과 | 개발사 | ⬜ | ⬜ |
-| 07 | [07_reward-history](07_reward-history/) | 완료·보상·이력 | 테스터 | ⬜ | ⬜ |
-| — | [99_full-demo-video](99_full-demo-video/) | 전체 데모 영상 | — | — | ⬜ |
+상태: ⬜ 미작업 · 🟨 작업 중 · ✅ 확정
+
+| 단계 | 폴더 | 화면 흐름 | 사용자 | HTML | 포함 화면 | 영상 |
+|---|---|---|---|---|---|---|
+| 01 | [01_tester-profile](01_tester-profile/) | 테스터 프로필 등록 | 테스터 | ⬜ | 0 / 6 | ⬜ |
+| 02 | [02_request-create](02_request-create/) | 의뢰 작성 | 개발사(기관 담당자) | ⬜ | 0 / 5 | ⬜ |
+| 03 | [03_group-proposal](03_group-proposal/) | 집단 제시·선택 | 개발사 | ⬜ | 0 / 4 | ⬜ |
+| 04 | [04_offer-accept](04_offer-accept/) | 참여 제안·수락 | 테스터 | ⬜ | 0 / 4 | ⬜ |
+| 05 | [05_test-feedback](05_test-feedback/) | 테스트 참여·피드백 제출 | 테스터 | ⬜ | 0 / 4 | ⬜ |
+| 06 | [06_progress-result](06_progress-result/) | 진행 현황·결과 | 개발사 | ⬜ | 0 / 4 | ⬜ |
+| 07 | [07_reward-history](07_reward-history/) | 완료·보상·이력 | 테스터 | ⬜ | 0 / 3 | ⬜ |
+| — | [99_full-demo-video](99_full-demo-video/) | 전체 데모 영상 | — | — | — | ⬜ |
 
 ## 폴더 구조
 
@@ -47,8 +49,8 @@ UX-UI_design_templete/
 │  ├─ demo-flow.md           7단계 흐름 표와 사업계획서 근거
 │  └─ video-guide.md         화면 녹화 규칙
 ├─ 01_tester-profile/  ~  07_reward-history/
-│    ├─ README.md            사용자, 담을 내용, 화면 순서표
-│    ├─ prototypes/          화면 시안 HTML (파일 하나로 브라우저에서 바로 열림)
+│    ├─ README.md            사용자, 담을 내용, 포함 화면 체크 표
+│    ├─ prototypes/          단계 HTML 1개 (그 단계의 화면 흐름 전체, 브라우저에서 바로 열림)
 │    ├─ video/               이 단계 화면 녹화 MP4
 │    └─ archive/             이전 버전 HTML
 └─ 99_full-demo-video/       전체 영상 링크, 스토리보드
@@ -59,9 +61,10 @@ UX-UI_design_templete/
 ## 시작하기
 
 1. [CONTRIBUTING.md](CONTRIBUTING.md)에서 파일 이름 규칙과 브랜치 규칙을 확인합니다.
-2. 맡은 단계 폴더의 README에 있는 "담을 내용"을 모두 넣었는지 확인하며 HTML 시안을 만듭니다.
-3. 시안을 그 단계의 `prototypes/`에 넣고, `design/단계-폴더명` 브랜치에서 PR을 엽니다.
-4. 영상을 올리려면 Git LFS를 먼저 설치합니다: `git lfs install`
+2. 맡은 단계의 화면들을 HTML 파일 하나에 버튼으로 이어지게 만들고, 그 단계 README의 "담을 내용"이 모두 들어갔는지 확인합니다.
+3. 넣은 화면은 그 단계 README의 "포함 화면 체크" 표에서 ✅로 바꿉니다.
+4. HTML을 그 단계의 `prototypes/`에 넣고, `design/단계-폴더명` 브랜치에서 PR을 엽니다.
+5. 영상을 올리려면 Git LFS를 먼저 설치합니다: `git lfs install`
 
 ## 참고 문서
 
