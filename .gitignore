@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 편집기·임시 파일
+.vscode/
+.idea/
+*.tmp
+~$*
+
+# 영상 편집 캐시
+*.prproj.lock
+Adobe Premiere Pro Auto-Save/
