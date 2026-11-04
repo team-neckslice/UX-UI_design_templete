@@ -46,23 +46,23 @@ UX-UI_design_templete/
 ├─ docs/
 │  ├─ demo-flow.md           7단계 흐름 표와 사업계획서 근거
 │  └─ video-guide.md         화면 녹화 규칙
-├─ 00_design-system/         컬러, 타이포그래피, 공통 컴포넌트
 ├─ 01_tester-profile/  ~  07_reward-history/
 │    ├─ README.md            사용자, 담을 내용, 화면 순서표
-│    ├─ screens/             확정 시안 PNG
+│    ├─ prototypes/          화면 시안 HTML (파일 하나로 브라우저에서 바로 열림)
 │    ├─ video/               이 단계 화면 녹화 MP4
-│    └─ archive/             이전 버전 시안
+│    └─ archive/             이전 버전 HTML
 └─ 99_full-demo-video/       전체 영상 링크, 스토리보드
 ```
+
+이 저장소는 **완성된 서비스 코드가 아니라 시나리오별 화면 시안을 보관하는 곳**입니다. 빌드나 실행 환경 없이, 각 HTML 파일을 브라우저로 열어 보면 됩니다.
 
 ## 시작하기
 
 1. [CONTRIBUTING.md](CONTRIBUTING.md)에서 파일 이름 규칙과 브랜치 규칙을 확인합니다.
-2. 영상을 올리려면 Git LFS를 먼저 설치합니다: `git lfs install`
-3. 맡은 단계 폴더의 README에 있는 "담을 내용"을 모두 넣었는지 확인하며 시안을 만듭니다.
-4. `design/단계-폴더명` 브랜치에서 작업하고 PR을 엽니다.
+2. 맡은 단계 폴더의 README에 있는 "담을 내용"을 모두 넣었는지 확인하며 HTML 시안을 만듭니다.
+3. 시안을 그 단계의 `prototypes/`에 넣고, `design/단계-폴더명` 브랜치에서 PR을 엽니다.
+4. 영상을 올리려면 Git LFS를 먼저 설치합니다: `git lfs install`
 
 ## 참고 문서
 
 - 사업계획서: 12_NeckSlice 사업계획서(플레이핏) — 1-2 기능 및 기대효과, 2-1 사용방법·핵심기능·차별성, UI/UX 데모 버전 개발
-- 참고 플랫폼 디자인 분석: 팀 프로젝트의 `platform_design_analysis_v3.md`
