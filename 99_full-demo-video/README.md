@@ -29,3 +29,10 @@
 3. 게시한 뒤 파일 링크를 위 표에 적습니다.
 
 스토리보드와 자막은 [storyboard.md](storyboard.md)를 봅니다.
+
+## 동영상 HTML
+
+기존 시안(01~07)을 활용해 동영상 HTML(`NeckSlice_demo_3min.html`)을 구현한 뒤 MP4로 렌더링합니다.
+
+- 빌드: `node 99_full-demo-video/video-html/build.mjs`
+- 렌더링: `python 99_full-demo-video/video-html/render.py`

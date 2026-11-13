@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<!--
+  NeckSlice 3분 데모 영상(HTML)
+  - 이 파일은 build.mjs 로 만든 결과물입니다. 수정은 video-html/template.html, scenes.json 에서 하고 다시 빌드하세요.
+  - 1920×1080 화면 기준. 브라우저 전체 화면(F11)에서 녹화하면 됩니다.
+  - 조작: Space 재생/일시정지 · ←/→ 5초 이동 · 0 처음으로 · 1~7 단계로 이동 · C 자막 끄기/켜기 · M 음악 끄기/켜기 · H 조작 안내 숨기기
+  - 주소 끝에 ?t=초 를 붙이면 그 시점부터, ?autoplay 를 붙이면 바로 재생합니다.
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeckSlice 3분 데모</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#1C2027; --bg-2:#242932; --line:#353B46; --ink:#F3F4F6; --text:#C9CDD4; --muted:#8B919C;
+  --brand:#7E95E6; --brand-deep:#4967CA; --tester:#63B5B4; --dev:#8FA3EC;
+  --s:1.05625;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;overflow:hidden}
+body{font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;word-break:keep-all}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:var(--bg);overflow:hidden}
+#stage.playing{cursor:none}
+#stage.paused .full,#stage.paused .full *,#stage.paused .card,#stage.paused .card *{animation-play-state:paused!important}
+.bgglow{position:absolute;inset:0;background:radial-gradient(900px 600px at 78% 40%,rgba(73,103,202,.16),transparent 70%),radial-gradient(700px 500px at 10% 90%,rgba(99,181,180,.08),transparent 70%)}
+
+/* 상단 진행 바 */
+.top{position:absolute;left:48px;right:48px;top:24px;height:52px;display:flex;align-items:center;gap:28px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:25px;color:var(--ink);letter-spacing:-.02em;white-space:nowrap}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--brand-deep);position:relative}
+.brand i::after{content:"";position:absolute;left:10px;top:6px;border-left:9px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.brand small{font-size:17px;font-weight:600;color:var(--muted);margin-left:6px}
+.steps{flex:1;display:flex;gap:8px}
+.steps li{list-style:none;flex:1;font-size:17px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden}
+.steps li .bar{height:5px;border-radius:2px;background:var(--line);margin-bottom:7px;overflow:hidden}
+.steps li .bar b{display:block;height:100%;width:0;background:var(--c,var(--brand))}
+.steps li.on{color:var(--ink)}
+.steps li.dev{--c:var(--dev)} .steps li.tester{--c:var(--tester)}
+.tc{font-variant-numeric:tabular-nums;font-size:19px;font-weight:600;color:var(--muted);white-space:nowrap}
+
+/* 왼쪽 설명 패널 */
+.panel{position:absolute;left:48px;top:104px;width:440px;height:846px;display:flex;flex-direction:column}
+.p-head{display:flex;align-items:center;gap:12px}
+.p-no{font-size:18px;font-weight:700;color:var(--muted);letter-spacing:.08em}
+.role{display:inline-flex;align-items:center;gap:7px;font-size:17px;font-weight:700;padding:5px 14px;border-radius:999px}
+.role::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.role.dev{color:var(--dev);background:rgba(143,163,236,.14)}
+.role.tester{color:var(--tester);background:rgba(99,181,180,.14)}
+.p-title{font-size:50px;font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1.25;margin-top:16px}
+.p-goal{font-size:22px;color:var(--text);margin-top:12px;line-height:1.55}
+.p-list{margin-top:30px;display:flex;flex-direction:column;gap:6px}
+.p-list li{list-style:none;border-radius:14px;padding:13px 16px;border:1px solid transparent;transition:background .35s,border-color .35s}
+.p-list li .h{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:600;color:var(--muted)}
+.p-list li .h em{font-style:normal;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);width:54px;flex-shrink:0}
+.p-list li .pt{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s ease}
+.p-list li .pt>div{overflow:hidden;font-size:19px;color:var(--text);line-height:1.5;padding-left:66px}
+.p-list li.done .h{color:#A9AEB8}
+.p-list li.done .h em::after{content:" ✓";color:var(--c)}
+.p-list li.now{background:var(--bg-2);border-color:var(--line)}
+.p-list li.now .h{color:var(--ink)}
+.p-list li.now .h em{color:var(--c)}
+.p-list li.now .pt{grid-template-rows:1fr}
+.p-list li.now .pt>div{padding-top:6px}
+.panel.dev{--c:var(--dev)} .panel.tester{--c:var(--tester)}
+.p-foot{margin-top:auto;font-size:16px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+.p-foot b{color:var(--text);font-weight:600}
+.p-team{position:absolute;right:72px;bottom:48px;width:400px;padding:20px 24px;border-radius:14px;background:linear-gradient(135deg,rgba(73,103,202,.20),rgba(99,181,180,.10));border:1px solid rgba(126,149,230,.28)}
+.p-team .tn{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;letter-spacing:.02em;color:var(--brand)}
+.p-team .tn::before{content:"";width:16px;height:16px;border-radius:5px;background:var(--brand-deep);box-shadow:inset 0 0 0 4px rgba(255,255,255,.18)}
+.p-team ul{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 12px;margin-top:12px}
+.p-team li{list-style:none;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:.02em}
+.panel.swap{animation:pin .5s ease}
+@keyframes pin{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+
+/* 브라우저 창 */
+.win{position:absolute;left:520px;top:104px;width:1352px;height:846px;border-radius:14px;overflow:hidden;background:#F5F6F8;box-shadow:0 30px 80px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06)}
+.chrome{height:40px;background:#E9EBEF;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid #D9DCE1}
+.chrome i{width:12px;height:12px;border-radius:50%;background:#CDD1D8}
+.chrome .addr{margin-left:18px;flex:1;max-width:560px;height:26px;border-radius:7px;background:#fff;font-size:15px;color:#767B84;display:flex;align-items:center;padding:0 12px;gap:8px}
+.chrome .addr b{color:#454A53;font-weight:600}
+.view{position:absolute;left:0;top:40px;width:1352px;height:806px;overflow:hidden}
+.view iframe{position:absolute;left:0;top:0;width:1280px;height:764px;border:0;transform:scale(var(--s));transform-origin:0 0;pointer-events:none;opacity:0;transition:opacity .35s}
+.view iframe.on{opacity:1}
+
+/* 단계 시작 카드 */
+.card{position:absolute;left:520px;top:104px;width:1352px;height:846px;border-radius:14px;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(28,32,39,.78);backdrop-filter:blur(6px)}
+.card.on{display:flex;animation:cardfade 1.5s ease both;animation-delay:var(--off,0s)}
+@keyframes cardfade{0%{opacity:0}12%{opacity:1}78%{opacity:1}100%{opacity:0}}
+.card .k{font-size:26px;font-weight:700;letter-spacing:.2em;color:var(--muted)}
+.card .n{font-size:150px;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.04em;margin-top:6px}
+.card .t{font-size:54px;font-weight:800;color:var(--ink);margin-top:18px;letter-spacing:-.02em}
+.card .role{font-size:21px;margin-top:22px;padding:6px 16px}
+.card.on .n,.card.on .t,.card.on .role{animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--off,0s)}
+
+/* 가상 커서 */
+.cursor{position:absolute;left:1300px;top:600px;width:30px;height:30px;z-index:30;pointer-events:none;opacity:0;transition:opacity .3s}
+.cursor.on{opacity:1}
+.cursor svg{width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.ripple{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:3px solid var(--brand-deep);z-index:29;pointer-events:none;animation:rip .6s ease-out forwards}
+@keyframes rip{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+
+/* 자막 */
+.sub{position:absolute;left:0;right:0;bottom:34px;display:flex;justify-content:center;z-index:40;pointer-events:none}
+.sub span{max-width:1500px;text-align:center;font-size:36px;font-weight:600;color:#fff;line-height:1.4;background:rgba(0,0,0,.66);padding:10px 28px;border-radius:10px;letter-spacing:-.01em}
+.sub span:empty{display:none}
+.sub.fade span{animation:subin .3s ease}
+@keyframes subin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.nosub .sub{display:none}
+
+/* 인트로·아웃트로 */
+.full{position:absolute;inset:0;z-index:20;background:var(--bg);display:none;overflow:hidden}
+.full.on{display:block}
+.full .glow{position:absolute;inset:0;background:radial-gradient(800px 520px at 50% 42%,rgba(73,103,202,.28),transparent 70%)}
+.a{animation-fill-mode:both;animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.8,.2,1);animation-delay:calc(var(--d,0s) + var(--off,0s))}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes fadeout{to{opacity:0;transform:translateY(-20px)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.rise{animation-name:rise}
+
+/* 인트로 1: 팀 */
+.i-team{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:fadeout .6s ease both;animation-delay:calc(4.1s + var(--off,0s))}
+.i-team .k{font-size:22px;font-weight:700;letter-spacing:.32em;color:var(--brand)}
+.i-team h1{font-size:140px;font-weight:800;color:var(--ink);letter-spacing:-.045em;line-height:1.05;margin-top:16px;display:flex;gap:28px}
+.i-team h1 span{display:inline-block}
+.i-team .line{width:120px;height:4px;border-radius:2px;background:var(--brand-deep);margin-top:34px;transform-origin:left;animation-name:grow}
+.i-team p{font-size:32px;color:var(--text);margin-top:30px}
+/* 인트로 2: 프로젝트 */
+.i-proj{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;animation:fadein .5s ease both;animation-delay:calc(4.5s + var(--off,0s))}
+.i-proj .k{font-size:28px;font-weight:700;color:var(--brand);letter-spacing:.04em}
+.i-proj h2{display:flex;align-items:center;gap:22px;font-size:120px;font-weight:800;color:var(--ink);letter-spacing:-.04em;margin-top:10px}
+.i-proj h2 i{width:96px;height:96px;border-radius:24px;background:var(--brand-deep);position:relative}
+.i-proj h2 i::after{content:"";position:absolute;left:36px;top:24px;border-left:34px solid #fff;border-top:24px solid transparent;border-bottom:24px solid transparent}
+.i-proj .tag{font-size:38px;font-weight:600;color:var(--ink);margin-top:26px;letter-spacing:-.02em}
+.i-proj .tag em{font-style:normal;color:var(--brand)}
+.flow{display:flex;align-items:center;gap:10px;margin-top:64px}
+.flow li{list-style:none;display:flex;flex-direction:column;align-items:center;gap:8px;width:212px;padding:16px 8px;border-radius:14px;background:var(--bg-2);border:1px solid var(--line)}
+.flow li b{font-size:16px;font-weight:700;color:var(--c)}
+.flow li span{font-size:19px;font-weight:600;color:var(--ink);text-align:center;line-height:1.35}
+.flow li.dev{--c:var(--dev)} .flow li.tester{--c:var(--tester)}
+.flow .arr{width:14px;height:2px;background:var(--line);padding:0;border:0;border-radius:0}
+.legend{display:flex;gap:26px;margin-top:22px;font-size:19px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend span::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+
+/* 아웃트로 */
+.o-wrap{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:0 150px;gap:80px}
+.o-txt .k{font-size:22px;font-weight:700;letter-spacing:.24em;color:var(--brand)}
+.o-txt h2{font-size:84px;font-weight:800;color:var(--ink);letter-spacing:-.04em;line-height:1.15;margin-top:18px}
+.o-txt h2 em{font-style:normal;color:var(--brand)}
+.o-txt p{font-size:30px;color:var(--text);line-height:1.6;margin-top:28px}
+.ring{position:relative;width:600px;height:600px;margin:0 auto}
+.ring svg{position:absolute;inset:0}
+.ring .node{position:absolute;width:190px;height:96px;margin:-48px 0 0 -95px;border-radius:18px;background:var(--bg-2);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;animation:nodeon 4s linear infinite;animation-delay:calc(var(--d) + var(--off,0s))}
+.ring .node b{font-size:28px;font-weight:800;color:var(--ink)}
+.ring .node span{font-size:17px;color:var(--muted);margin-top:2px}
+@keyframes nodeon{0%,22%{border-color:var(--brand);box-shadow:0 0 0 6px rgba(126,149,230,.18);background:#2A3247}25%,100%{border-color:var(--line);box-shadow:none;background:var(--bg-2)}}
+.ring .core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
+.ring .core b{display:block;font-size:30px;font-weight:800;color:var(--ink);line-height:1.3}
+.ring .core span{font-size:17px;color:var(--muted)}
+.ring .spin{transform-origin:300px 300px;animation:spin 4s linear infinite;animation-delay:var(--off,0s)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.o-thanks{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);opacity:0;animation:fadein .8s ease both;animation-delay:calc(6.2s + var(--off,0s))}
+.o-thanks h2{font-size:120px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+.o-thanks p{font-size:34px;color:var(--text);margin-top:18px}
+.o-thanks .team{margin-top:40px;font-size:22px;font-weight:700;letter-spacing:.3em;color:var(--brand)}
+.o-wrap{animation:fadeout .6s ease both;animation-delay:calc(6s + var(--off,0s))}
+
+/* 시작 안내·조작 */
+.hint{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+.hint div{background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:36px 48px;text-align:center}
+.hint h3{font-size:34px;color:var(--ink);font-weight:800}
+.hint p{font-size:21px;color:var(--text);margin-top:14px;line-height:1.7}
+.hint kbd{font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);background:#323844;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.playing .hint,.hidehint .hint{display:none}
+.loading .hint h3::after{content:" · 화면 불러오는 중…";color:var(--muted);font-weight:600;font-size:22px}
+</style>
+</head>
+<body>
+<div id="stage" class="paused loading">
+  <div class="bgglow"></div>
+
+  <div class="top">
+    <div class="brand"><i></i>NeckSlice<small>게임 테스터 매칭 플랫폼</small></div>
+    <ul class="steps" id="steps"></ul>
+    <div class="tc" id="tc">00:00 / 03:00</div>
+  </div>
+
+  <aside class="panel" id="panel"></aside>
+
+  <div class="win">
+    <div class="chrome"><i></i><i></i><i></i><div class="addr">🔒 <b>NeckSlice</b><span id="addr"></span></div></div>
+    <div class="view" id="view"></div>
+  </div>
+  <div class="card" id="card"></div>
+  <div class="cursor" id="cursor"><svg viewBox="0 0 24 24"><path d="M4 2l15 11.5-6.6 1.1 3.9 7.3-2.9 1.5-3.9-7.4L4 20.6z" fill="#fff" stroke="#1C2027" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+
+  <section class="full" id="intro">
+    <div class="glow"></div>
+    <div class="i-team">
+      <div class="k a rise" style="--d:.2s">CAPSTONE PROJECT · UI/UX DEMO</div>
+      <h1><span class="a rise" style="--d:.5s">Team</span><span class="a rise" style="--d:.75s">NeckSlice</span></h1>
+      <div class="line a" style="--d:1.3s"></div>
+      <p class="a rise" style="--d:1.6s">게임 개발사와 게이머 사이, 꼭 맞는 연결을 고민하는 팀</p>
+    </div>
+    <div class="i-proj">
+      <div class="k a rise" style="--d:4.7s">게임 테스터 매칭 중개 플랫폼</div>
+      <h2 class="a rise" style="--d:4.9s"><i></i>NeckSlice</h2>
+      <div class="tag a rise" style="--d:5.4s">개발사에는 <em>필요한 테스터 집단</em>을, 게이머에게는 <em>맞는 테스트 기회</em>를</div>
+      <ul class="flow" id="flow"></ul>
+      <div class="legend a rise" style="--d:7.6s"><span style="--c:var(--tester)">테스터 화면</span><span style="--c:var(--dev)">개발사 화면</span></div>
+    </div>
+  </section>
+
+  <section class="full" id="outro">
+    <div class="glow"></div>
+    <div class="o-wrap">
+      <div class="o-txt">
+        <div class="k a rise" style="--d:.2s">OUR VISION</div>
+        <h2 class="a rise" style="--d:.4s">쓸수록<br><em>정확해지는 매칭</em></h2>
+        <p class="a rise" style="--d:.8s">성장하는 인디게임이 좋은 테스터를 만나<br>한 단계 더 크게 성장할 수 있도록.<br>NeckSlice가 그 연결을 만듭니다.</p>
+      </div>
+      <div class="ring a rise" style="--d:.5s">
+        <svg viewBox="0 0 600 600"><circle cx="300" cy="300" r="200" fill="none" stroke="#353B46" stroke-width="3" stroke-dasharray="6 10"/><g class="spin"><circle cx="300" cy="100" r="9" fill="#7E95E6"/></g></svg>
+        <div class="node" style="left:300px;top:100px;--d:0s"><b>의뢰</b><span>개발사</span></div>
+        <div class="node" style="left:500px;top:300px;--d:1s"><b>매칭</b><span>근거 있는 집단</span></div>
+        <div class="node" style="left:300px;top:500px;--d:2s"><b>테스트</b><span>테스터</span></div>
+        <div class="node" style="left:100px;top:300px;--d:3s"><b>이력</b><span>다음 매칭의 근거</span></div>
+        <div class="core"><b>성장 순환</b><span>Team NeckSlice</span></div>
+      </div>
+    </div>
+    <div class="o-thanks">
+      <h2 class="a rise" style="--d:6.5s">감사합니다</h2>
+      <p class="a rise" style="--d:6.8s">게임 테스터 매칭 중개 플랫폼 · NeckSlice</p>
+      <div class="team a rise" style="--d:7.2s">TEAM NECKSLICE</div>
+      <div class="p-team a rise" id="credits" style="--d:7.5s"></div>
+    </div>
+  </section>
+
+  <div class="sub" id="sub"><span></span></div>
+
+  <div class="hint"><div>
+    <h3>NeckSlice 3분 데모</h3>
+    <p><kbd>Space</kbd> 재생 / 일시정지 · <kbd>←</kbd><kbd>→</kbd> 5초 이동 · <kbd>0</kbd> 처음으로 · <kbd>1</kbd>~<kbd>7</kbd> 단계로 이동<br><kbd>C</kbd> 자막 끄기·켜기 · <kbd>M</kbd> 음악 끄기·켜기 · <kbd>H</kbd> 이 안내 숨기기 · 녹화는 <kbd>F11</kbd> 전체 화면에서</p>
+  </div></div>
+</div>
+
+<script>
+/*__DATA__*/
+(function(){
+'use strict';
+const RENDER=new URLSearchParams(location.search).has('render');
+const TIMESHIM='<script>(function(){var now=0,q=[],id=1,base=Date.now(),D=Date;Date.now=function(){return base+now};'+
+ 'window.setTimeout=function(f,ms){q.push({id:id,t:now+(+ms||0),f:f,a:[].slice.call(arguments,2)});return id++};'+
+ 'window.setInterval=function(f,ms){q.push({id:id,t:now+Math.max(1,+ms||0),f:f,a:[],iv:Math.max(1,+ms||0)});return id++};'+
+ 'window.clearTimeout=window.clearInterval=function(i){q=q.filter(function(x){return x.id!==i})};'+
+ 'window.__advance=function(ms){var end=now+ms;for(var g=0;g<500;g++){q.sort(function(a,b){return a.t-b.t});var x=q[0];if(!x||x.t>end)break;now=x.t;if(x.iv)x.t+=x.iv;else q.shift();try{if(typeof x.f==="function")x.f.apply(window,x.a)}catch(e){}}now=end};})()<\/script>';
+const S=1.05625, VIEW_X=520, VIEW_Y=144; // 브라우저 보기 영역의 스테이지 좌표
+const $=id=>document.getElementById(id);
+const stage=$('stage');
+
+/* ---------- 타임라인 ---------- */
+let t=0;
+const subs=[];
+SCENES.intro.subs.forEach((s,i,a)=>subs.push({s:s.t,e:i+1<a.length?a[i+1].t:SCENES.intro.dur,text:s.text}));
+t=SCENES.intro.dur;
+const stages=SCENES.stages.map((st,si)=>{
+  st.si=si; st.start=t; st.cardEnd=t+st.card.dur;
+  subs.push({s:st.start,e:st.cardEnd,text:st.card.sub});
+  t=st.cardEnd;
+  st.screens.forEach((sc,k)=>{
+    sc.k=k; sc.start=t; sc.end=t+sc.dur;
+    if(sc.subs) sc.subs.forEach((s,i,a)=>subs.push({s:t+s.t,e:t+(i+1<a.length?a[i+1].t:sc.dur),text:s.text}));
+    else subs.push({s:t,e:sc.end,text:sc.sub});
+    t=sc.end;
+  });
+  st.end=t; return st;
+});
+const OUT=SCENES.outro; OUT.start=t;
+OUT.subs.forEach((s,i,a)=>subs.push({s:t+s.t,e:t+(i+1<a.length?a[i+1].t:OUT.dur),text:s.text}));
+const TOTAL=Math.round((t+OUT.dur)*1000)/1000;
+
+/* 이벤트(시간순) */
+const events=[];
+stages.forEach(st=>{
+  st.screens.forEach(sc=>{
+    events.push({time:sc.k===0?st.start:sc.start,si:st.si,run:()=>enterScreen(st.si,sc.k)});
+    (sc.steps||[]).forEach(step=>{
+      const at=sc.start+step.at;
+      if(step.scroll){events.push({time:at,si:st.si,run:()=>scrollTo(st.si,step.scroll,step.dur||1.5)});return}
+      if(step.zoom){events.push({time:at,si:st.si,run:()=>step.zoom==='out'?zoomOut(step.dur||0.6):zoomTo(st.si,step,step.dur||0.7)});return}
+      events.push({time:at-1.0,si:st.si,run:()=>{const el=find(st.si,step);if(el)reveal(st.si,el)}});
+      events.push({time:at-0.65,si:st.si,run:()=>{const el=find(st.si,step);if(el)moveCursor(st.si,el)}});
+      events.push({time:at,si:st.si,run:()=>{const el=find(st.si,step);if(el){ripple();el.click()}else missed.push(at.toFixed(1)+'s '+st.no+'-'+(sc.k+1)+' '+(step.text||step.click))}});
+      const nx=(sc.steps||[]).filter(o=>!o.zoom&&!o.scroll&&o.at>step.at).map(o=>o.at)[0];
+      if(nx===undefined||nx-step.at>2.6)events.push({time:at+0.7,si:st.si,run:()=>hideCursor()});
+    });
+  });
+});
+events.sort((a,b)=>a.time-b.time);
+
+/* ---------- 화면 레이아웃 ---------- */
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='translate('+(innerWidth-1920*k)/2+'px,'+(innerHeight-1080*k)/2+'px) scale('+k+')'}
+addEventListener('resize',fit);fit();
+
+const roleCls=r=>r==='개발사'?'dev':'tester';
+if(SCENES.team)$('credits').innerHTML='<div class="tn">'+SCENES.team.name+'</div><ul>'+SCENES.team.members.map(n=>'<li>'+n+'</li>').join('')+'</ul>';else $('credits').remove();
+$('steps').innerHTML=stages.map(st=>'<li class="'+roleCls(st.role)+'"><div class="bar"><b></b></div>'+st.no+' '+(st.short||st.title)+'</li>').join('');
+$('flow').innerHTML=stages.map((st,i)=>(i?'<li class="arr a" style="--d:'+(6+i*.18)+'s;animation-name:fadein"></li>':'')+'<li class="'+roleCls(st.role)+' a rise" style="--d:'+(6+i*.18)+'s"><b>'+st.no+' · '+st.role+'</b><span>'+st.title+'</span></li>').join('');
+const stepEls=[...$('steps').children];
+
+/* ---------- 프로토타입 iframe ---------- */
+const frames=[], ready=[], dirty=[];
+function makeFrame(i){
+  return new Promise(res=>{
+    if(frames[i])frames[i].remove();
+    const f=document.createElement('iframe');
+    f.setAttribute('tabindex','-1');
+    f.addEventListener('load',()=>{
+      const d=f.contentDocument;
+      const st=d.createElement('style');
+      st.textContent='html{scrollbar-width:none;scroll-behavior:auto!important}html::-webkit-scrollbar{display:none}';
+      d.head.appendChild(st);d.body.classList.add('rec');
+      ready[i]=true;dirty[i]=false;res();
+    },{once:true});
+    ready[i]=false;
+    f.srcdoc=RENDER?PROTOS[i].replace(/<head>/i,m=>m+TIMESHIM):PROTOS[i];
+    $('view').appendChild(f);frames[i]=f;
+    if(cur.si===i)f.classList.add('on');
+  });
+}
+const win=i=>frames[i]&&frames[i].contentWindow;
+function enterScreen(si,k){const w=win(si);if(w&&w.PF){w.PF.show(k);w.scrollTo(0,0)}dirty[si]=true;if(cam.el||cam.cur.z>1.001)zoomOut(0.6)}
+/* 카메라(줌): 설명하는 부분을 확대해 보여 줌. 시간은 재생 시계 기준이라 MP4 렌더에서도 그대로 재현됨 */
+const VW=1352,VH=806,FW=1280,FH=764;
+const cam={el:null,z1:1,cur:{z:1,fx:FW/2,fy:FH/2},tw:null,tx:0,ty:0};
+function camTarget(){
+  if(!cam.el)return{z:1,fx:FW/2,fy:FH/2};
+  const r=cam.el.getBoundingClientRect();
+  if(!r.width&&!r.height)return{z:1,fx:FW/2,fy:FH/2};
+  return{z:cam.z1,fx:r.left+r.width/2,fy:r.top+r.height/2};
+}
+function zoomTo(si,step,dur){
+  const el=find(si,{click:step.zoom,text:step.text,i:step.i});
+  if(!el){missed.push('zoom '+T.toFixed(1)+'s '+(step.text||step.zoom));return}
+  const r=el.getBoundingClientRect();
+  const auto=Math.min(FW*0.84/r.width,FH*0.8/r.height);
+  cam.tw={from:{...cam.cur},t0:T,dur};cam.el=el;cam.z1=Math.max(1,Math.min(step.z||auto,step.max||1.85));
+}
+function zoomOut(dur){cam.tw={from:{...cam.cur},t0:T,dur};cam.el=null}
+function camReset(){cam.el=null;cam.tw=null;cam.cur={z:1,fx:FW/2,fy:FH/2}}
+function applyCam(si){
+  const tg=camTarget();let c=tg;
+  if(cam.tw){const p=Math.max(0,Math.min(1,(T-cam.tw.t0)/cam.tw.dur)),e=ease(p),f=cam.tw.from;
+    c={z:f.z+(tg.z-f.z)*e,fx:f.fx+(tg.fx-f.fx)*e,fy:f.fy+(tg.fy-f.fy)*e};if(p>=1)cam.tw=null}
+  cam.cur=c;const k=S*c.z;
+  cam.tx=Math.min(0,Math.max(VW-FW*k,VW/2-c.fx*k));cam.ty=Math.min(0,Math.max(VH-FH*k,VH/2-c.fy*k));
+  frames.forEach((f,i)=>{f.style.transform=i===si?'translate('+cam.tx+'px,'+cam.ty+'px) scale('+k+')':''});
+}
+function find(si,step){
+  const w=win(si);if(!w)return null;const d=w.document;
+  const scope=d.querySelector('.screen:not([hidden])')||d;
+  if(step.text){return [...scope.querySelectorAll('button,a')].find(b=>b.offsetParent&&b.textContent.trim().includes(step.text))||null}
+  const all=[...scope.querySelectorAll(step.click)].filter(e=>e.offsetParent||e.type==='checkbox');
+  return all[step.i||0]||null;
+}
+/* 스크롤 트윈(재생 시간 기준이라 일시정지하면 멈춤) */
+let tween=null;
+function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2}
+function scrollTo(si,target,dur){
+  const w=win(si);if(!w)return;
+  const max=Math.max(0,w.document.documentElement.scrollHeight-w.innerHeight);
+  const to=target==='bottom'?max:Math.min(max,+target||0);
+  tween={w,from:w.scrollY,to,t0:T,dur};
+}
+function reveal(si,el){
+  const w=win(si),r=el.getBoundingClientRect();
+  if(r.top<90||r.bottom>w.innerHeight-60){scrollTo(si,w.scrollY+r.top-w.innerHeight*0.55,0.45)}
+}
+function runTween(){
+  if(!tween)return;
+  const p=Math.min(1,(T-tween.t0)/tween.dur);
+  tween.w.scrollTo(0,tween.from+(tween.to-tween.from)*ease(Math.max(0,p)));
+  if(p>=1)tween=null;
+}
+/* 가상 커서 */
+const cursor=$('cursor');
+/* 커서: 대상 요소를 매 프레임 따라가므로 줌이 움직이는 중에도 정확히 그 위를 가리킴 */
+const cur2={el:null,from:{x:1300,y:600},t0:0,x:1300,y:600};
+function elPos(el){
+  const r=el.getBoundingClientRect();if(!r.width&&!r.height)return null;
+  const k=S*cam.cur.z;
+  return{x:VIEW_X+cam.tx+(r.left+Math.min(r.width*0.5,r.width-14))*k,y:VIEW_Y+cam.ty+(r.top+r.height*0.55)*k};
+}
+function moveCursor(si,el){
+  const p=elPos(el);if(!p)return;
+  if(!cursor.classList.contains('on')){cur2.x=p.x+140;cur2.y=p.y+120}
+  cur2.from={x:cur2.x,y:cur2.y};cur2.el=el;cur2.t0=T;cursor.classList.add('on');runCursor();
+}
+function runCursor(){
+  if(cur2.el){
+    const p=cur2.el.isConnected?elPos(cur2.el):null;
+    if(!p)cur2.el=null;
+    else{const e=ease(Math.min(1,Math.max(0,(T-cur2.t0)/0.6)));cur2.x=cur2.from.x+(p.x-cur2.from.x)*e;cur2.y=cur2.from.y+(p.y-cur2.from.y)*e}
+  }
+  cursor.style.left=cur2.x+'px';cursor.style.top=cur2.y+'px';
+}
+function hideCursor(){cursor.classList.remove('on');cur2.el=null}
+function ripple(){const r=document.createElement('div');r.className='ripple';r.style.left=cursor.style.left;r.style.top=cursor.style.top;stage.appendChild(r);setTimeout(()=>r.remove(),700)}
+
+/* ---------- 상태 그리기 ---------- */
+const cur={seg:null,si:-1,k:-1,sub:null};
+function segAt(x){
+  if(x<SCENES.intro.dur)return{seg:'intro'};
+  if(x>=OUT.start)return{seg:'outro'};
+  const st=stages.find(s=>x>=s.start&&x<s.end);
+  const sc=st.screens.find(s=>x>=s.start&&x<s.end)||st.screens[0];
+  return{seg:'stage',si:st.si,k:sc.k,card:x<st.cardEnd};
+}
+function restartAnims(el,off){el.style.setProperty('--off',(-off)+'s');el.classList.remove('on');el.offsetWidth;el.classList.add('on')}
+function renderPanel(st,k){
+  const p=$('panel');p.className='panel '+roleCls(st.role);
+  p.innerHTML='<div class="p-head"><span class="p-no">STEP '+st.no+'</span><span class="role '+roleCls(st.role)+'">'+st.role+' 화면</span></div>'+
+    '<h2 class="p-title">'+st.title+'</h2><p class="p-goal">'+st.goal+'</p>'+
+    '<ol class="p-list">'+st.screens.map((sc,i)=>'<li class="'+(i<k?'done':i===k?'now':'')+'"><div class="h"><em>'+st.no+'-'+String(i+1).padStart(2,'0')+'</em>'+sc.title+'</div><div class="pt"><div>'+sc.point+'</div></div></li>').join('')+'</ol>'+
+    '<div class="p-foot"><b>데모 시나리오</b> · 「리셋 던전」 튜토리얼 첫 경험 테스트<br>장르 초보 6 + 경험자 6 · 모두 첫 이용자 · 60분 · 개발사 부담 42만원</div>';
+  p.classList.remove('swap');p.offsetWidth;p.classList.add('swap');
+}
+function setList(k){[...$('panel').querySelectorAll('.p-list li')].forEach((li,i)=>li.className=i<k?'done':i===k?'now':'')}
+function draw(){
+  const g=segAt(T);
+  // 구간 전환
+  if(g.seg!==cur.seg||(g.seg==='stage'&&g.si!==cur.si)){
+    $('intro').classList.toggle('on',g.seg==='intro');
+    $('outro').classList.toggle('on',g.seg==='outro');
+    if(g.seg==='intro')restartAnims($('intro'),T);
+    if(g.seg==='outro')restartAnims($('outro'),T-OUT.start);
+    if(g.seg==='stage'){
+      const st=stages[g.si];
+      frames.forEach((f,i)=>f.classList.toggle('on',i===g.si));camReset();
+      renderPanel(st,g.k);
+      $('addr').textContent=' / '+st.no+' '+st.title;
+      $('card').innerHTML='<div class="k">STEP</div><div class="n">'+st.no+'</div><div class="t">'+st.title+'</div><span class="role '+roleCls(st.role)+'">'+st.role+' 화면</span>';
+      if(g.card)restartAnims($('card'),T-st.start);else $('card').classList.remove('on');
+    }
+    cur.seg=g.seg;cur.si=g.seg==='stage'?g.si:-1;cur.k=g.k;hideCursor();
+  }else if(g.seg==='stage'&&g.k!==cur.k){setList(g.k);cur.k=g.k}
+  if(g.seg==='stage'&&!g.card&&$('card').classList.contains('on')&&T-stages[g.si].cardEnd>0.2)$('card').classList.remove('on');
+  // 상단 진행
+  stepEls.forEach((li,i)=>{const st=stages[i];const p=Math.max(0,Math.min(1,(T-st.start)/(st.end-st.start)));li.querySelector('b').style.width=(p*100)+'%';li.classList.toggle('on',g.seg==='stage'&&g.si===i)});
+  const f=x=>String(Math.floor(x/60)).padStart(2,'0')+':'+String(Math.floor(x%60)).padStart(2,'0');
+  $('tc').textContent=f(Math.min(T,TOTAL))+' / '+f(TOTAL);
+  if(g.seg==='stage'){applyCam(g.si);runCursor()}
+  // 자막
+  const s=subs.find(s=>T>=s.s&&T<s.e);const txt=s?s.text:'';
+  if(txt!==cur.sub){const el=$('sub');el.querySelector('span').textContent=txt;el.classList.remove('fade');el.offsetWidth;el.classList.add('fade');cur.sub=txt}
+}
+
+/* ---------- 재생 ---------- */
+let T=0,prevT=0,playing=false,last=0,busy=false;
+const missed=[];
+function advance(dt){
+  T+=dt;
+  if(T>=TOTAL){T=TOTAL;setPlaying(false)}
+  for(const ev of events){if(ev.time>prevT&&ev.time<=T){try{ev.run()}catch(e){missed.push(ev.time+': '+e.message)}}}
+  prevT=T;
+}
+/* 배경음악: 재생 중에는 음악 시계를 기준으로 시간을 맞춰 영상과 어긋나지 않게 함 */
+const bgm=MUSIC&&!RENDER?new Audio(MUSIC):null;
+const MV=(SCENES.music&&SCENES.music.volume)||0.8, MF=(SCENES.music&&SCENES.music.fadeOut)||3;
+let muted=false;
+const musicOn=()=>bgm&&!bgm.paused&&!bgm.ended&&bgm.readyState>2;
+function syncAudio(){
+  if(!bgm)return;
+  const end=isFinite(bgm.duration)?bgm.duration:TOTAL;
+  if(playing&&!busy&&T<end-0.05){
+    if(bgm.paused){bgm.currentTime=T;bgm.play().catch(()=>{})}
+    else if(Math.abs(bgm.currentTime-T)>0.35)bgm.currentTime=T;
+  }else if(!bgm.paused)bgm.pause();
+  bgm.volume=muted?0:MV*Math.max(0,Math.min(1,(Math.min(end,TOTAL)-T)/MF,T/0.8+0.2));
+}
+function frame(now){
+  if(playing&&!busy){
+    let dt=Math.min(0.1,(now-last)/1000);
+    if(musicOn()){const d=bgm.currentTime-T;if(d>-0.1&&d<0.2)dt=Math.max(0,d)}
+    advance(dt);
+  }
+  last=now;runTween();draw();syncAudio();requestAnimationFrame(frame);
+}
+function setPlaying(v){playing=v;stage.classList.toggle('playing',v);stage.classList.toggle('paused',!v)}
+async function seek(x){
+  x=Math.max(0,Math.min(TOTAL-0.01,x));
+  busy=true;tween=null;hideCursor();
+  T=x;prevT=x;cur.seg=null;
+  const g=segAt(x);
+  const jobs=[];
+  frames.forEach((f,i)=>{if(dirty[i]||(g.seg==='stage'&&g.si===i))jobs.push(makeFrame(i))});
+  await Promise.all(jobs);
+  if(g.seg==='stage'){
+    const st=stages[g.si],w=win(g.si);
+    for(const sc of st.screens){
+      if(sc.k>g.k)break;
+      if(w.PF)w.PF.show(sc.k);
+      for(const step of sc.steps||[]){if(step.scroll||step.zoom||sc.start+step.at>x)continue;const el=find(g.si,step);if(el)el.click()}
+    }
+    w.scrollTo(0,0);dirty[g.si]=true;camReset();
+    const sc=st.screens[g.k],zs=(sc.steps||[]).filter(z=>z.zoom&&sc.start+z.at<=x).pop();
+    if(zs&&zs.zoom!=='out'){const el=find(g.si,{click:zs.zoom,text:zs.text,i:zs.i});if(el){const r=el.getBoundingClientRect();cam.el=el;cam.z1=Math.max(1,Math.min(zs.z||Math.min(FW*0.84/r.width,FH*0.8/r.height),zs.max||1.85));cam.cur=camTarget()}}
+  }
+  T=x;prevT=x;cur.seg=null;busy=false;
+}
+function stageIndexAt(){const g=segAt(T);return g.seg==='stage'?g.si:g.seg==='intro'?-1:stages.length}
+addEventListener('keydown',e=>{
+  if(stage.classList.contains('loading'))return;
+  const k=e.key;
+  if(k===' '||k==='Enter'){e.preventDefault();if(T>=TOTAL)seek(0).then(()=>setPlaying(true));else setPlaying(!playing)}
+  else if(k==='ArrowRight')seek(T+5);
+  else if(k==='ArrowLeft')seek(T-5);
+  else if(k==='0'||k==='Home')seek(0);
+  else if(k>='1'&&k<='7')seek(stages[+k-1].start);
+  else if(k==='c'||k==='C'||k==='ㅊ')stage.classList.toggle('nosub');
+  else if(k==='m'||k==='M'||k==='ㅡ')muted=!muted;
+  else if(k==='h'||k==='H'||k==='ㅗ')stage.classList.toggle('hidehint');
+});
+stage.addEventListener('click',()=>{if(!stage.classList.contains('loading')&&!playing)setPlaying(true)});
+
+/* 시작 */
+(async()=>{
+  await Promise.all(PROTOS.map((_,i)=>makeFrame(i)));
+  try{await document.fonts.ready}catch(e){}
+  stage.classList.remove('loading');
+  const q=new URLSearchParams(location.search);
+  await seek(+(q.get('t')||0));
+  if(q.has('autoplay'))setPlaying(true);
+})();
+if(!RENDER)requestAnimationFrame(n=>{last=n;frame(n)});
+/* 점검용: DEMO.tick(초) 로 화면을 그리지 않고 시간을 넘길 수 있음, DEMO.missed 에 실패한 클릭 기록 */
+/* MP4 렌더 모드(?render): 시간을 한 프레임씩 직접 넘기고, CSS 애니메이션·프로토타입 타이머도 같은 시계로 맞춤 */
+function syncAnims(V){
+  const docs=[document];frames.forEach(f=>{try{if(f.contentDocument)docs.push(f.contentDocument)}catch(e){}});
+  for(const d of docs)for(const a of d.getAnimations()){if(a.__v0===undefined){a.__v0=V;a.pause()}a.currentTime=Math.max(0,(V-a.__v0)*1000)}
+}
+async function renderStart(){await seek(0);stage.classList.add('playing');stage.classList.remove('paused');playing=true;syncAnims(0)}
+function renderTo(V){
+  const dt=V-T;
+  frames.forEach(f=>{try{f.contentWindow.__advance&&f.contentWindow.__advance(dt*1000)}catch(e){}});
+  advance(dt);runTween();draw();syncAnims(V);
+}
+window.DEMO={seek,renderStart,renderTo,get bgm(){return bgm},tick(dt){advance(dt);runTween();draw()},missed,find:(si,step)=>find(si,step),get T(){return T},play:()=>setPlaying(true),pause:()=>setPlaying(false),TOTAL};
+})();
+</script>
+</body>
+</html>
