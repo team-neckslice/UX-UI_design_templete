@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<!--
+  단계: 02 의뢰 작성
+  사용자: 개발사
+  포함 화면: 02-01 테스트 목적, 02-02 조건, 02-03 집단 구성, 02-04 일정·보상, 02-05 확인·제출
+  작성자: 박현 (NeckSlice)
+  버전: v1 (2026-11-13) — 시안 A 기반 저채도 디자인, 화면별 핵심 정보만 표시
+  만든 도구: Claude
+  데모 시나리오: 「리셋 던전」 튜토리얼 첫 경험 테스트 · 장르 초보 6 + 경험자 6 · 모두 첫 이용자 · 60분 · 개발사 부담 42만원
+  조작: 화면 안 버튼 또는 ←/→ 로 화면 이동 · H 로 오른쪽 아래 전환 버튼 숨기기(녹화용) · 주소 끝 #번호로 특정 화면 열기
+  ※ 모든 이름·회사·게임은 가상입니다.
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlayFit 데모 · 02 의뢰 작성</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* PlayFit 데모 공통 스타일 v2 — 시안 A(Trust Market) 기반, 채도를 낮춘 버전
+   원칙: 흰 카드 + 옅은 회색 바탕, 강조색은 저채도 블루 하나. 화면당 목표 1개·블록 3개 안팎·주 버튼 1개 */
+
+:root{
+  /* 바탕·선·글자 — 순백·순흑을 피해 눈부심을 줄임 */
+  --bg:#F5F6F8; --surface:#FFFFFF; --soft:#F8F9FA; --chip:#F0F1F4;
+  --line:#E4E6EA; --line-2:#D5D8DE;
+  --ink:#262A31; --text:#454A53; --muted:#767B84;
+  /* 강조(시안 A 코발트 #2B5CFF의 채도를 낮춤) */
+  --brand:#4967CA; --brand-dark:#3954AC; --brand-soft:#EEF1F9; --brand-line:#CBD3EB;
+  /* 의미 색(모두 저채도) */
+  --ok:#429469; --ok-soft:#EAF5EF;
+  --warn:#B28434; --warn-soft:#F9F2E7;
+  --bad:#BC4E4E; --bad-soft:#F9ECEC;
+  --teal:#3F8C8D; --teal-soft:#EBF4F4;
+  --star:#DF9A49;
+  --r-pill:999px; --r-card:16px; --r-sm:10px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:72px;
+  --wrap:1120px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word;min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;width:100%}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+ul,ol{list-style:none}
+h1,h2,h3{color:var(--ink);line-height:1.35;font-weight:700;letter-spacing:-.02em}
+:focus-visible{outline:3px solid var(--brand-line);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--s5)}
+.narrow{max-width:720px;margin:0 auto}
+.muted{color:var(--muted)} .small{font-size:13px} .ink{color:var(--ink)} .num{font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:var(--s3)} .between{justify-content:space-between} .grow{flex:1}
+.stack{display:flex;flex-direction:column;gap:var(--s4)}
+.mt2{margin-top:var(--s4)} .mt3{margin-top:var(--s5)} .mb2{margin-bottom:var(--s4)}
+
+/* 역할 탭(시안 A audience-bar) — 지금 누구의 화면인지 표시 */
+.role-bar{background:#2E323A}
+.role-bar .wrap{display:flex;gap:var(--s1);padding-top:6px}
+.role-bar span{font-size:13px;font-weight:600;color:#A3A8B1;padding:6px 16px;border-radius:8px 8px 0 0}
+.role-bar span.on{background:var(--surface);color:var(--ink)}
+
+/* 헤더 */
+.site-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.header-inner{display:flex;align-items:center;gap:var(--s6);height:64px}
+.logo{display:flex;align-items:center;gap:var(--s2);font-weight:800;font-size:19px;color:var(--ink);letter-spacing:-.02em}
+.logo-mark{width:22px;height:22px;border-radius:6px;background:var(--brand);position:relative;flex-shrink:0}
+.logo-mark::after{content:"";position:absolute;left:8px;top:5px;border-left:8px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.main-nav{display:flex;gap:var(--s5);font-size:14px;font-weight:500;color:var(--muted)}
+.main-nav a.on{color:var(--ink);font-weight:600}
+.account{margin-left:auto;display:flex;align-items:center;gap:var(--s2);font-size:14px;font-weight:600;color:var(--ink)}
+
+/* 버튼(시안 A: 알약형, 외곽선은 진한 테두리) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);border-radius:var(--r-pill);font-weight:600;font-size:15px;height:44px;padding:0 var(--s5);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.btn-sm{height:36px;font-size:14px;padding:0 var(--s4)}
+.btn-lg{height:52px;font-size:16px;padding:0 var(--s6)}
+.btn-block{width:100%}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-outline{border-color:var(--line-2);color:var(--ink);background:var(--surface)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-text{background:none;color:var(--muted);padding:0 var(--s3)}
+.btn-text:hover{color:var(--ink)}
+.btn.is-off{opacity:.4;pointer-events:none}
+
+/* 화면 */
+.screen{padding:var(--s6) 0 var(--s8);animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.breadcrumb{font-size:13px;color:var(--muted);margin-bottom:var(--s2)}
+.page-head{margin-bottom:var(--s5)}
+.page-head h1{font-size:28px}
+.page-head p{color:var(--muted);margin-top:var(--s1)}
+.head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s4)}
+
+/* 카드·블록 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:var(--s5)}
+.card-lg{padding:var(--s6)}
+.card h2{font-size:17px;margin-bottom:var(--s3)}
+.card-title{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s3)}
+.card-title h2{margin:0}
+.soft{background:var(--soft);border-radius:var(--r-sm);padding:var(--s4)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.side{display:grid;grid-template-columns:1fr 320px;gap:var(--s5);align-items:start}
+.side>aside{position:sticky;top:84px}
+
+/* 위저드(단계 안 진행 표시) — 숫자와 이름만 */
+.wiz{display:flex;gap:var(--s5);margin-bottom:var(--s5);font-size:13px;color:var(--muted)}
+.wiz li{display:flex;align-items:center;gap:6px}
+.wiz li b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line-2);font-size:11px;font-weight:700}
+.wiz li.done b{background:var(--chip);border-color:var(--chip);color:var(--muted)}
+.wiz li.now{color:var(--ink);font-weight:600}
+.wiz li.now b{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* 수치 줄(시안 A stat-row) */
+.stat-row{display:grid;grid-template-columns:repeat(var(--n,4),1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
+.stat-row div{padding:var(--s4) var(--s5)}
+.stat-row div+div{border-left:1px solid var(--line)}
+.stat-row dt{font-size:13px;color:var(--muted)}
+.stat-row dd{font-size:24px;font-weight:700;color:var(--ink);line-height:1.35;font-variant-numeric:tabular-nums}
+.stat-row dd small{font-size:14px;font-weight:500;color:var(--muted);margin-left:2px}
+.stat-row .key{background:var(--brand-soft)}
+.stat-row .key dd{color:var(--brand-dark)}
+.stat-row .warn dd{color:var(--warn)}
+
+/* 금액 줄(시안 A fee-calc) */
+.fee div{display:flex;justify-content:space-between;padding:var(--s2) 0;border-bottom:1px dashed var(--line);font-size:14px}
+.fee dt{color:var(--muted)} .fee dd{font-weight:600;color:var(--ink)}
+.fee .total{border-bottom:0;padding-top:var(--s3)}
+.fee .total dt{color:var(--ink);font-weight:600}
+.fee .total dd{color:var(--brand-dark);font-size:20px}
+
+/* 칩·배지 */
+.chips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.chip{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--line-2);background:var(--surface);font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-dark);font-weight:600}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;border-radius:var(--r-pill);padding:2px 10px;background:var(--chip);color:var(--text);white-space:nowrap}
+.tag.brand{background:var(--brand-soft);color:var(--brand-dark)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.teal{background:var(--teal-soft);color:var(--teal)}
+/* 근거 수준: 점 하나 + 글자. 자기기입(회색) < 연동 확인(블루) < 운영 확인(초록), 미확인(황토) */
+.ev{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap}
+.ev::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ev-self{color:var(--muted)} .ev-link{color:var(--brand)} .ev-ops{color:var(--ok)} .ev-none{color:var(--warn)}
+/* 이 게임 첫 이용자(시안 A verified 모양) */
+.first{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--brand-dark)}
+.first::before{content:"✓";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--brand);color:#fff;font-size:10px}
+
+/* 아바타(채도 낮춘 6색) */
+.av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+.av-lg{width:64px;height:64px;font-size:24px}
+.a1{background:#5C77C9}.a2{background:#4B8C8D}.a3{background:#7C6CB8}.a4{background:#B9728A}.a5{background:#6C7380}.a6{background:#B48A45}
+
+/* 선택 카드 */
+.opts{display:grid;gap:var(--s3)}
+.opt{display:flex;gap:var(--s3);align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-card);padding:var(--s4);cursor:pointer}
+.opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex-shrink:0;margin-top:3px;position:relative}
+.opt[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.opt[aria-pressed="true"] .dot{border-color:var(--brand)}
+.opt[aria-pressed="true"] .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--brand)}
+.opt strong{display:block;color:var(--ink);font-size:15px}
+.opt p{font-size:13px;color:var(--muted)}
+
+/* 입력 */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font-size:14px;font-weight:600;color:var(--ink)}
+.input,.select,.textarea{width:100%;height:44px;border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);padding:0 var(--s3);color:var(--ink)}
+.textarea{height:auto;min-height:110px;padding:var(--s3);resize:vertical;line-height:1.65}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--brand)}
+.help{font-size:12px;color:var(--muted)}
+.check{display:flex;gap:var(--s2);align-items:flex-start;font-size:14px;cursor:pointer}
+.check input{accent-color:var(--brand);width:17px;height:17px;margin-top:3px;flex-shrink:0}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--r-pill);overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;font-size:14px;padding:7px 16px;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--brand-soft);color:var(--brand-dark);font-weight:600}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:var(--r-pill);overflow:hidden;background:var(--surface)}
+.stepper button{width:38px;height:38px;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer}
+.stepper output{min-width:36px;text-align:center;font-weight:700;color:var(--ink)}
+.switch{position:relative;width:42px;height:24px;border-radius:999px;background:var(--line-2);border:0;cursor:pointer;flex-shrink:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--brand)}
+.switch[aria-checked="true"]::after{transform:translateX(18px)}
+
+/* 목록 */
+.list>li{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+.list>li:last-child{border-bottom:0}
+.list strong{color:var(--ink);font-size:14px;font-weight:600}
+.list .end{margin-left:auto}
+.lines li{display:flex;align-items:center;gap:var(--s3);padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.lines li:last-child{border-bottom:0}
+.lines li>span:first-child{color:var(--muted);width:96px;flex-shrink:0}
+.lines li b{color:var(--ink);font-weight:600}
+.lines li .ev,.lines li .tag{margin-left:auto}
+.ticks li{position:relative;padding-left:22px;font-size:14px;margin:6px 0}
+.ticks li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700}
+.ticks li.q::before{content:"!";color:var(--warn)}
+
+/* 막대(시안 A rating-bars) */
+.bar{height:8px;background:var(--chip);border-radius:var(--r-pill);overflow:hidden}
+.bar i{display:block;height:100%;width:var(--v);background:var(--brand);border-radius:inherit}
+.bar.t i{background:var(--teal)}
+.comp{display:flex;height:34px;border-radius:var(--r-sm);overflow:hidden;gap:3px}
+.comp>div{display:flex;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:13px;font-weight:600;transition:flex .3s;white-space:nowrap;min-width:0}
+.comp .g1{background:var(--teal)} .comp .g2{background:var(--brand)}
+
+/* 인용(시안 A feedback) */
+.quote{border-left:3px solid var(--brand-line);background:var(--soft);padding:var(--s4) var(--s5);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink)}
+.quote footer{font-size:13px;color:var(--muted);margin-top:var(--s2)}
+
+/* 타임라인 */
+.tl li{position:relative;padding:0 0 var(--s4) 26px;font-size:14px}
+.tl li::before{content:"";position:absolute;left:6px;top:18px;bottom:0;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl li::after{content:"";position:absolute;left:0;top:5px;width:14px;height:14px;border-radius:50%;background:var(--surface);border:2px solid var(--line-2)}
+.tl li.done::after{background:var(--ok);border-color:var(--ok)}
+.tl li.now::after{background:var(--surface);border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.tl strong{display:block;color:var(--ink);font-weight:600}
+.tl small{color:var(--muted);font-size:13px}
+
+/* 알림 띠 */
+.notice{display:flex;align-items:center;gap:var(--s3);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:var(--r-sm);padding:var(--s3) var(--s4);font-size:14px}
+.notice.warn{border-left-color:var(--warn)}
+.notice.ok{border-left-color:var(--ok)}
+.notice b{color:var(--ink)}
+.notice .btn{margin-left:auto}
+
+/* 하단 버튼 줄 */
+.actions{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s5)}
+.actions .right{margin-left:auto;display:flex;gap:var(--s2)}
+.action-bar{position:sticky;bottom:16px;z-index:10;display:flex;align-items:center;gap:var(--s2);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);padding:8px 8px 8px var(--s5);box-shadow:0 6px 20px rgba(38,42,49,.07);margin-top:var(--s5)}
+.action-bar .msg{font-size:14px;color:var(--muted)}
+.action-bar .msg b{color:var(--ink)}
+.action-bar .right{margin-left:auto;display:flex;gap:var(--s2)}
+
+/* 완료 화면 */
+.complete{text-align:center;padding:var(--s6) 0 var(--s5)}
+.done-ic{width:60px;height:60px;border-radius:50%;margin:0 auto var(--s4);display:grid;place-items:center;background:var(--ok-soft);color:var(--ok);font-size:28px;font-weight:700}
+.complete h1{font-size:26px}
+.complete p{color:var(--muted);margin-top:var(--s2)}
+.next-link{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);border:1px dashed var(--line-2);border-radius:var(--r-card);padding:var(--s4) var(--s5);margin-top:var(--s5);font-size:14px}
+.next-link small{display:block;font-size:12px;color:var(--muted)}
+.next-link b{color:var(--ink)}
+
+/* 접기 */
+details.more{border-top:1px solid var(--line);margin-top:var(--s4);padding-top:var(--s3)}
+details.more summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--brand-dark);list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:" ▾";font-size:11px}
+details.more[open] summary::after{content:" ▴"}
+details.more>div{margin-top:var(--s3)}
+
+/* 서랍 */
+.scrim{position:fixed;inset:0;background:rgba(38,42,49,.35);z-index:70}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);z-index:80;box-shadow:-8px 0 30px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.drawer>header{padding:var(--s5);border-bottom:1px solid var(--line)}
+.drawer>.body{padding:var(--s5);flex:1;overflow:auto;display:flex;flex-direction:column;gap:var(--s4)}
+.drawer>footer{padding:var(--s4) var(--s5);border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:var(--s2)}
+
+/* 토스트 */
+.toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,10px);opacity:0;z-index:90;background:#2E323A;color:#fff;font-size:14px;padding:10px 18px;border-radius:var(--r-pill);transition:all .25s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* 푸터 */
+.site-footer{border-top:1px solid var(--line);background:var(--surface);padding:var(--s5) 0;font-size:13px;color:var(--muted)}
+
+/* 데모 화면 전환(시안 A screen-switch) — H 키로 숨김 */
+.screen-switch{position:fixed;right:20px;bottom:20px;z-index:60;display:flex;align-items:center;gap:2px;background:#2E323A;padding:6px;border-radius:var(--r-pill);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.screen-switch .lbl{color:#A3A8B1;font-size:12px;padding:0 10px;white-space:nowrap}
+.screen-switch button,.screen-switch a{border:0;background:none;color:#E6E8EC;font-size:13px;font-weight:600;padding:7px 12px;border-radius:var(--r-pill);cursor:pointer}
+.screen-switch button[aria-current="true"]{background:var(--brand);color:#fff}
+.screen-switch a{color:#A3A8B1;padding:7px 10px}
+.screen-switch a:hover{color:#fff}
+.screen-switch .sep{width:1px;height:18px;background:#4A4F59;margin:0 4px}
+body.rec .screen-switch{display:none}
+
+@media (max-width:960px){
+  .main-nav{display:none}
+  .side,.two{grid-template-columns:1fr}
+  .side>aside{position:static}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .stat-row div:nth-child(3){border-left:0}
+  .wiz li span{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ───────── 02 단계 전용 ───────── */
+
+.sum h3{font-size:12px;font-weight:600;color:var(--muted);margin:var(--s4) 0 6px}
+.sum h3:first-child{margin-top:0}
+.cond li{display:flex;align-items:center;gap:var(--s3);padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cond li:last-child{border-bottom:0}
+.cond li strong{color:var(--ink);font-weight:600;width:140px;flex-shrink:0}
+.cond li .val{color:var(--text)}
+.cond li .seg{margin-left:auto}
+.cond li .seg button{padding:4px 14px;font-size:13px}
+.lock{margin-left:auto;font-size:12px;color:var(--muted)}
+.grp{display:flex;align-items:center;gap:var(--s4);padding:var(--s4) 0;border-bottom:1px solid var(--line)}
+.grp:last-of-type{border-bottom:0}
+.grp i{width:10px;height:36px;border-radius:4px;flex-shrink:0}
+.grp strong{display:block;color:var(--ink)}
+.grp small{color:var(--muted);font-size:13px}
+.grp .stepper{margin-left:auto}
+.review li{display:flex;gap:var(--s4);padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.review li:last-child{border-bottom:0}
+.review li span{color:var(--muted);width:90px;flex-shrink:0}
+.review li b{color:var(--ink);font-weight:600}
+.review li a{margin-left:auto;color:var(--brand-dark);font-size:13px;cursor:pointer}
+.done-wrap{display:none}
+.is-done .done-wrap{display:block}
+.is-done .pre{display:none}
+
+</style>
+</head>
+<body data-step="02">
+<div class="role-bar" aria-label="현재 사용자"><div class="wrap"><span class="on">개발사</span><span class="">테스터</span></div></div>
+<header class="site-header"><div class="wrap header-inner">
+  <a class="logo" href="#"><span class="logo-mark"></span>PlayFit</a><nav class="main-nav"><a href="#" class=on>새 의뢰</a><a href="#">진행 중 테스트</a><a href="#">결과 보고서</a></nav><div class="account"><span class="av a5" style="width:30px;height:30px;font-size:12px">모</span>스튜디오 모래시계</div>
+</div></header>
+<main class="wrap">
+<template id="sumTpl">
+  <div class="card sum">
+    <h3>집단 구성</h3>
+    <div class="comp" style="height:26px"><div class="g1" data-flex="g1">초보 <span data-v="g1">6</span></div><div class="g2" data-flex="g2">경험자 <span data-v="g2">6</span></div></div>
+    <h3>예상 비용 · <span data-v="n">12</span>명</h3>
+    <dl class="fee">
+      <div><dt>매칭료</dt><dd><span data-v="match">24</span>만원</dd></div>
+      <div><dt>테스터 보상</dt><dd><span data-v="reward">18</span>만원</dd></div>
+      <div class="total"><dt>합계</dt><dd><span data-v="total">42</span>만원</dd></div>
+    </dl>
+  </div>
+</template>
+
+<!-- 02-01 테스트 목적 -->
+<section class="screen" id="s1" data-title="테스트 목적">
+  <ol class="wiz"><li class="now"><b>1</b><span>목적</span></li><li><b>2</b><span>조건</span></li><li><b>3</b><span>집단 구성</span></li><li><b>4</b><span>일정·보상</span></li><li><b>5</b><span>확인</span></li><li style="margin-left:auto">리셋 던전 · 10분 의뢰 서식</li></ol>
+  <div class="side">
+    <div>
+      <div class="page-head"><h1>무엇을 확인하고 싶나요?</h1><p>목적에 맞는 테스터와 피드백 서식을 준비해 드려요.</p></div>
+      <div class="opts" style="grid-template-columns:1fr 1fr" data-group>
+        <button class="opt" data-pick aria-pressed="true"><span class="dot"></span><span><strong>튜토리얼 이해도</strong><p>처음 하는 사람이 안내만으로 이해하는지</p></span></button>
+        <button class="opt" data-pick aria-pressed="false"><span class="dot"></span><span><strong>난이도</strong><p>구간별 막힘과 체감 난이도</p></span></button>
+        <button class="opt" data-pick aria-pressed="false"><span class="dot"></span><span><strong>버그</strong><p>다양한 환경에서의 오류 재현</p></span></button>
+        <button class="opt" data-pick aria-pressed="false"><span class="dot"></span><span><strong>재미·첫인상</strong><p>첫 30분의 몰입</p></span></button>
+      </div>
+      <h2 class="mt3 mb2" style="font-size:17px">누구에게 맡길까요?</h2>
+      <div class="opts" style="grid-template-columns:1fr 1fr" data-group>
+        <button class="opt" data-pick aria-pressed="true"><span class="dot"></span><span><strong>첫 경험 테스트</strong><p>이 게임을 처음 하는 사람만 모집</p></span></button>
+        <button class="opt" data-pick aria-pressed="false"><span class="dot"></span><span><strong>수정 확인 테스트</strong><p>이전 회차 참여자를 다시 초대</p></span></button>
+      </div>
+      <div class="actions"><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+    </div>
+    <aside class="sum-slot"></aside>
+  </div>
+</section>
+
+<!-- 02-02 조건 -->
+<section class="screen" id="s2" data-title="조건" hidden>
+  <ol class="wiz"><li class="done"><b>1</b><span>목적</span></li><li class="now"><b>2</b><span>조건</span></li><li><b>3</b><span>집단 구성</span></li><li><b>4</b><span>일정·보상</span></li><li><b>5</b><span>확인</span></li><li style="margin-left:auto">리셋 던전 · 10분 의뢰 서식</li></ol>
+  <div class="side">
+    <div>
+      <div class="page-head"><h1>테스터 조건</h1><p><b class="ink">필수</b>는 반드시 맞아야 하고, <b class="ink">선호</b>는 맞으면 우선 배정해요.</p></div>
+      <div class="card">
+        <ul class="cond">
+          <li><strong>이 게임 첫 이용자</strong><span class="first">첫 경험 테스트</span><span class="lock">필수 고정</span></li>
+          <li><strong>플랫폼</strong><span class="val">Windows PC</span><span class="seg" data-group><button data-pick aria-pressed="true">필수</button><button data-pick aria-pressed="false">선호</button></span></li>
+          <li><strong>최소 사양</strong><span class="val">GTX 1060 이상</span><span class="seg" data-group><button data-pick aria-pressed="true">필수</button><button data-pick aria-pressed="false">선호</button></span></li>
+          <li><strong>입력 장치</strong><span class="val">키보드·마우스</span><span class="seg" data-group><button data-pick aria-pressed="true">필수</button><button data-pick aria-pressed="false">선호</button></span></li>
+          <li><strong>언어</strong><span class="val">한국어</span><span class="seg" data-group><button data-pick aria-pressed="true">필수</button><button data-pick aria-pressed="false">선호</button></span></li>
+          <li><strong>화면 녹화</strong><span class="val">가능</span><span class="seg" data-group><button data-pick aria-pressed="false">필수</button><button data-pick aria-pressed="true">선호</button></span></li>
+        </ul>
+      </div>
+      <p class="help mt2">장르 경험 조건은 다음 단계에서 집단별로 정해요.</p>
+      <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+    </div>
+    <aside class="sum-slot"></aside>
+  </div>
+</section>
+
+<!-- 02-03 집단 구성 -->
+<section class="screen" id="s3" data-title="집단 구성" hidden>
+  <ol class="wiz"><li class="done"><b>1</b><span>목적</span></li><li class="done"><b>2</b><span>조건</span></li><li class="now"><b>3</b><span>집단 구성</span></li><li><b>4</b><span>일정·보상</span></li><li><b>5</b><span>확인</span></li><li style="margin-left:auto">리셋 던전 · 10분 의뢰 서식</li></ol>
+  <div class="side">
+    <div>
+      <div class="page-head"><h1>어떤 사람들의 반응을 비교할까요?</h1><p>집단별 결과를 나란히 비교해 드려요.</p></div>
+      <div class="card">
+        <div class="grp"><i style="background:var(--teal)"></i><div><strong>장르 초보</strong><small>로그라이크 10시간 미만</small></div><div class="stepper"><button data-inc="-1" aria-label="줄이기">−</button><output id="g1" data-max="20">6</output><button data-inc="1" aria-label="늘리기">+</button></div></div>
+        <div class="grp"><i style="background:var(--brand)"></i><div><strong>장르 경험자</strong><small>로그라이크 클리어 경험</small></div><div class="stepper"><button data-inc="-1" aria-label="줄이기">−</button><output id="g2" data-max="20">6</output><button data-inc="1" aria-label="늘리기">+</button></div></div>
+        <div class="comp mt2"><div class="g1" data-flex="g1">초보 <span data-v="g1">6</span>명</div><div class="g2" data-flex="g2">경험자 <span data-v="g2">6</span>명</div></div>
+        <p class="small muted mt2">총 <b class="ink" data-v="n">12</b>명 · 모두 이 게임 첫 이용자</p>
+      </div>
+      <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+    </div>
+    <aside class="sum-slot"></aside>
+  </div>
+</section>
+
+<!-- 02-04 일정·보상 -->
+<section class="screen" id="s4" data-title="일정·보상" hidden>
+  <ol class="wiz"><li class="done"><b>1</b><span>목적</span></li><li class="done"><b>2</b><span>조건</span></li><li class="done"><b>3</b><span>집단 구성</span></li><li class="now"><b>4</b><span>일정·보상</span></li><li><b>5</b><span>확인</span></li><li style="margin-left:auto">리셋 던전 · 10분 의뢰 서식</li></ol>
+  <div class="side">
+    <div>
+      <div class="page-head"><h1>일정과 보상</h1><p>플레이 시간에 맞는 권장 보상을 채워 두었어요.</p></div>
+      <div class="card stack">
+        <div class="two">
+          <div class="field"><label>테스트 기간</label><input class="input" value="2028. 4. 17 (월) – 4. 23 (일)"></div>
+          <div class="field"><label>제출 마감</label><input class="input" value="4. 23 (일) 23:59"></div>
+        </div>
+        <div class="field"><span class="label">1인 플레이 시간</span>
+          <div class="chips" data-group><button class="chip" data-pick aria-pressed="false" data-rw="1">30분</button><button class="chip" data-pick aria-pressed="true" data-rw="1.5">60분</button><button class="chip" data-pick aria-pressed="false" data-rw="2.5">90분</button></div></div>
+        <div class="soft row between"><span>1인 보상 <span class="help">· 제출이 확인된 테스터에게만</span></span><b class="ink"><span data-v="rw">1.5</span>만원</b></div>
+        <div class="soft row between"><span>1인 매칭료 <span class="help">· 모집·불참 대체·결과 정리 포함</span></span><b class="ink">2만원</b></div>
+      </div>
+      <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+    </div>
+    <aside class="sum-slot"></aside>
+  </div>
+</section>
+
+<!-- 02-05 확인·제출 -->
+<section class="screen" id="s5" data-title="확인·제출" hidden>
+  <div id="doneWrap">
+    <div class="pre">
+      <ol class="wiz"><li class="done"><b>1</b><span>목적</span></li><li class="done"><b>2</b><span>조건</span></li><li class="done"><b>3</b><span>집단 구성</span></li><li class="done"><b>4</b><span>일정·보상</span></li><li class="now"><b>5</b><span>확인</span></li><li style="margin-left:auto">리셋 던전 · 10분 의뢰 서식</li></ol>
+      <div class="side">
+        <div>
+          <div class="page-head"><h1>의뢰 내용 확인</h1><p>제출하면 24시간 안에 테스터 집단을 제시해 드려요.</p></div>
+          <div class="card">
+            <ul class="review">
+              <li><span>목적</span><b>튜토리얼 이해도 · 첫 경험 테스트</b><a data-go="1">수정</a></li>
+              <li><span>필수 조건</span><b>Windows PC · GTX 1060 이상 · 키보드 · 한국어</b><a data-go="2">수정</a></li>
+              <li><span>집단</span><b>초보 <span data-v="g1">6</span> + 경험자 <span data-v="g2">6</span> = <span data-v="n">12</span>명</b><a data-go="3">수정</a></li>
+              <li><span>일정</span><b>4. 17 – 4. 23 · 1인 60분</b><a data-go="4">수정</a></li>
+            </ul>
+          </div>
+          <label class="check mt2"><input type="checkbox" checked> 빌드는 NDA에 동의한 테스터에게만 개인 링크로 배포됨을 확인했습니다.</label>
+          <div class="actions"><button class="btn btn-text" data-prev>이전</button></div>
+        </div>
+        <aside class="card stack">
+          <dl class="fee">
+            <div><dt>매칭료 2만원 × <span data-v="n">12</span></dt><dd><span data-v="match">24</span>만원</dd></div>
+            <div><dt>보상 <span data-v="rw">1.5</span>만원 × <span data-v="n">12</span></dt><dd><span data-v="reward">18</span>만원</dd></div>
+            <div class="total"><dt>합계</dt><dd><span data-v="total">42</span>만원</dd></div>
+          </dl>
+          <p class="help">결제는 집단을 승인할 때 진행돼요.</p>
+          <button class="btn btn-primary btn-lg btn-block" id="submitBtn">의뢰 제출</button>
+        </aside>
+      </div>
+    </div>
+    <div class="done-wrap narrow">
+      <div class="complete"><div class="done-ic">✓</div><h1>의뢰가 접수됐어요</h1><p>의뢰 번호 PF-2804-0417 · 24시간 안에 집단을 제시해 드려요.</p></div>
+      <div class="card"><ul class="tl">
+        <li class="done"><strong>의뢰 접수</strong><small>4. 14 (금)</small></li>
+        <li class="now"><strong>테스터 집단 구성 중</strong><small>조건에 맞는 첫 이용자 중에서 선별</small></li>
+        <li><strong>집단 확인·승인</strong><small>근거를 보고 승인하거나 교체</small></li>
+      </ul></div>
+      <a class="next-link" href="../../03_group-proposal/prototypes/03_group-proposal_v1.html"><span><small>데모 다음 단계 · 개발사</small><b>03 집단 제시·선택</b></span><span class="btn btn-sm btn-outline">이어서 보기 →</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-footer"><div class="wrap">© 2028 PlayFit · 데모 화면(가상 데이터)</div></footer>
+<nav class="screen-switch" aria-label="데모 화면 전환"><a href="../../01_tester-profile/prototypes/01_tester-profile_v1.html" title="이전 단계">‹ 01</a><span class="lbl">02 의뢰 작성</span><span class="tabs"></span><a href="../../03_group-proposal/prototypes/03_group-proposal_v1.html" title="다음 단계">03 ›</a></nav>
+<script>
+/* PlayFit 데모 공통 스크립트 v2 — 화면 전환, 데모 전환 버튼, 입력 요소 */
+(function(){
+  const screens=[...document.querySelectorAll('.screen')];
+  const tabs=document.querySelector('.screen-switch .tabs');
+  const no=document.body.dataset.step;
+  let cur=0;
+  screens.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.type='button';b.textContent=no+'-'+String(i+1).padStart(2,'0');b.title=s.dataset.title;
+    b.addEventListener('click',()=>show(i));tabs.appendChild(b);
+  });
+  function show(i){
+    i=Math.max(0,Math.min(screens.length-1,i));
+    screens.forEach((s,k)=>s.hidden=k!==i);
+    [...tabs.children].forEach((b,k)=>b.setAttribute('aria-current',k===i));
+    cur=i;history.replaceState(null,'','#'+(i+1));
+    window.scrollTo({top:0,behavior:'instant'});
+    document.querySelectorAll('.drawer,.scrim').forEach(d=>d.hidden=true);
+    document.dispatchEvent(new CustomEvent('pf:screen',{detail:{index:i}}));
+  }
+  let tt;
+  function toast(msg){
+    let t=document.querySelector('.toast');
+    if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}
+    t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2000);
+  }
+  document.addEventListener('click',e=>{
+    const el=e.target.closest('[data-next],[data-prev],[data-go],[data-toggle],[data-pick],.switch,[data-inc],[data-toast],[data-open],[data-close]');
+    if(!el)return;
+    if(el.matches('a[href="#"]'))e.preventDefault();
+    if(el.hasAttribute('data-toggle'))el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')!=='true');
+    if(el.hasAttribute('data-pick')){const g=el.closest('[data-group]');(g?g.querySelectorAll('[data-pick]'):[el]).forEach(o=>o.setAttribute('aria-pressed',o===el))}
+    if(el.classList.contains('switch'))el.setAttribute('aria-checked',el.getAttribute('aria-checked')!=='true');
+    if(el.hasAttribute('data-inc')){
+      const o=el.parentElement.querySelector('output');
+      o.textContent=Math.max(+(o.dataset.min||0),Math.min(+(o.dataset.max||99),+o.textContent+ +el.dataset.inc));
+      o.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    if(el.hasAttribute('data-open'))document.querySelectorAll('[data-layer="'+el.dataset.open+'"]').forEach(d=>d.hidden=false);
+    if(el.hasAttribute('data-close'))document.querySelectorAll('.drawer,.scrim').forEach(d=>d.hidden=true);
+    if(el.hasAttribute('data-toast'))toast(el.dataset.toast);
+    if(el.hasAttribute('data-next'))show(cur+1);
+    if(el.hasAttribute('data-prev'))show(cur-1);
+    if(el.hasAttribute('data-go'))show(+el.dataset.go-1);
+    document.dispatchEvent(new CustomEvent('pf:change',{detail:{el}}));
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.target.matches('input,textarea,select'))return;
+    if(e.key==='ArrowRight')show(cur+1);
+    else if(e.key==='ArrowLeft')show(cur-1);
+    else if(e.key==='h'||e.key==='H'||e.key==='ㅗ')document.body.classList.toggle('rec');
+    else if(e.key==='Escape')document.querySelectorAll('.drawer,.scrim').forEach(d=>d.hidden=true);
+  });
+  addEventListener('hashchange',()=>{const n=parseInt(location.hash.slice(1),10);if(n>0&&n-1!==cur)show(n-1)});
+  window.PF={show,toast,get cur(){return cur}};
+  const h=parseInt(location.hash.slice(1),10);show(h>0?h-1:0);
+})();
+
+
+(function(){
+  const tpl=document.getElementById('sumTpl');
+  document.querySelectorAll('.sum-slot').forEach(s=>s.appendChild(tpl.content.cloneNode(true)));
+  let rw=1.5;const f=v=>String(Math.round(v*10)/10);
+  function calc(){
+    const g1=+document.getElementById('g1').textContent,g2=+document.getElementById('g2').textContent,n=g1+g2;
+    const v={g1,g2,n,rw:f(rw),match:f(n*2),reward:f(n*rw),total:f(n*2+n*rw)};
+    for(const k in v)document.querySelectorAll('[data-v="'+k+'"]').forEach(e=>e.textContent=v[k]);
+    document.querySelectorAll('[data-flex="g1"]').forEach(e=>{e.style.flex=g1;e.style.display=g1?'flex':'none'});
+    document.querySelectorAll('[data-flex="g2"]').forEach(e=>{e.style.flex=g2;e.style.display=g2?'flex':'none'});
+  }
+  document.addEventListener('change',e=>{if(e.target.matches('output'))calc()});
+  document.addEventListener('pf:change',e=>{if(e.detail.el.dataset.rw){rw=+e.detail.el.dataset.rw;calc()}});
+  document.getElementById('submitBtn').addEventListener('click',()=>{document.getElementById('doneWrap').classList.add('is-done');window.scrollTo({top:0});PF.toast('의뢰가 접수됐어요')});
+  document.addEventListener('pf:screen',()=>document.getElementById('doneWrap').classList.remove('is-done'));
+  calc();
+})();
+
+</script>
+</body>
+</html>

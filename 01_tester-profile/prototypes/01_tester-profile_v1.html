@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<!--
+  단계: 01 테스터 프로필 등록
+  사용자: 테스터
+  포함 화면: 01-01 회원가입·역할 선택, 01-02 게임·장르, 01-03 경험 수준, 01-04 환경·일정, 01-05 Steam 연동, 01-06 프로필 완료
+  작성자: 박현 (NeckSlice)
+  버전: v1 (2026-11-13) — 시안 A 기반 저채도 디자인, 화면별 핵심 정보만 표시
+  만든 도구: Claude
+  데모 시나리오: 「리셋 던전」 튜토리얼 첫 경험 테스트 · 장르 초보 6 + 경험자 6 · 모두 첫 이용자 · 60분 · 개발사 부담 42만원
+  조작: 화면 안 버튼 또는 ←/→ 로 화면 이동 · H 로 오른쪽 아래 전환 버튼 숨기기(녹화용) · 주소 끝 #번호로 특정 화면 열기
+  ※ 모든 이름·회사·게임은 가상입니다.
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlayFit 데모 · 01 테스터 프로필 등록</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* PlayFit 데모 공통 스타일 v2 — 시안 A(Trust Market) 기반, 채도를 낮춘 버전
+   원칙: 흰 카드 + 옅은 회색 바탕, 강조색은 저채도 블루 하나. 화면당 목표 1개·블록 3개 안팎·주 버튼 1개 */
+
+:root{
+  /* 바탕·선·글자 — 순백·순흑을 피해 눈부심을 줄임 */
+  --bg:#F5F6F8; --surface:#FFFFFF; --soft:#F8F9FA; --chip:#F0F1F4;
+  --line:#E4E6EA; --line-2:#D5D8DE;
+  --ink:#262A31; --text:#454A53; --muted:#767B84;
+  /* 강조(시안 A 코발트 #2B5CFF의 채도를 낮춤) */
+  --brand:#4967CA; --brand-dark:#3954AC; --brand-soft:#EEF1F9; --brand-line:#CBD3EB;
+  /* 의미 색(모두 저채도) */
+  --ok:#429469; --ok-soft:#EAF5EF;
+  --warn:#B28434; --warn-soft:#F9F2E7;
+  --bad:#BC4E4E; --bad-soft:#F9ECEC;
+  --teal:#3F8C8D; --teal-soft:#EBF4F4;
+  --star:#DF9A49;
+  --r-pill:999px; --r-card:16px; --r-sm:10px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:72px;
+  --wrap:1120px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word;min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;width:100%}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+ul,ol{list-style:none}
+h1,h2,h3{color:var(--ink);line-height:1.35;font-weight:700;letter-spacing:-.02em}
+:focus-visible{outline:3px solid var(--brand-line);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--s5)}
+.narrow{max-width:720px;margin:0 auto}
+.muted{color:var(--muted)} .small{font-size:13px} .ink{color:var(--ink)} .num{font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:var(--s3)} .between{justify-content:space-between} .grow{flex:1}
+.stack{display:flex;flex-direction:column;gap:var(--s4)}
+.mt2{margin-top:var(--s4)} .mt3{margin-top:var(--s5)} .mb2{margin-bottom:var(--s4)}
+
+/* 역할 탭(시안 A audience-bar) — 지금 누구의 화면인지 표시 */
+.role-bar{background:#2E323A}
+.role-bar .wrap{display:flex;gap:var(--s1);padding-top:6px}
+.role-bar span{font-size:13px;font-weight:600;color:#A3A8B1;padding:6px 16px;border-radius:8px 8px 0 0}
+.role-bar span.on{background:var(--surface);color:var(--ink)}
+
+/* 헤더 */
+.site-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.header-inner{display:flex;align-items:center;gap:var(--s6);height:64px}
+.logo{display:flex;align-items:center;gap:var(--s2);font-weight:800;font-size:19px;color:var(--ink);letter-spacing:-.02em}
+.logo-mark{width:22px;height:22px;border-radius:6px;background:var(--brand);position:relative;flex-shrink:0}
+.logo-mark::after{content:"";position:absolute;left:8px;top:5px;border-left:8px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.main-nav{display:flex;gap:var(--s5);font-size:14px;font-weight:500;color:var(--muted)}
+.main-nav a.on{color:var(--ink);font-weight:600}
+.account{margin-left:auto;display:flex;align-items:center;gap:var(--s2);font-size:14px;font-weight:600;color:var(--ink)}
+
+/* 버튼(시안 A: 알약형, 외곽선은 진한 테두리) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);border-radius:var(--r-pill);font-weight:600;font-size:15px;height:44px;padding:0 var(--s5);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.btn-sm{height:36px;font-size:14px;padding:0 var(--s4)}
+.btn-lg{height:52px;font-size:16px;padding:0 var(--s6)}
+.btn-block{width:100%}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-outline{border-color:var(--line-2);color:var(--ink);background:var(--surface)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-text{background:none;color:var(--muted);padding:0 var(--s3)}
+.btn-text:hover{color:var(--ink)}
+.btn.is-off{opacity:.4;pointer-events:none}
+
+/* 화면 */
+.screen{padding:var(--s6) 0 var(--s8);animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.breadcrumb{font-size:13px;color:var(--muted);margin-bottom:var(--s2)}
+.page-head{margin-bottom:var(--s5)}
+.page-head h1{font-size:28px}
+.page-head p{color:var(--muted);margin-top:var(--s1)}
+.head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s4)}
+
+/* 카드·블록 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:var(--s5)}
+.card-lg{padding:var(--s6)}
+.card h2{font-size:17px;margin-bottom:var(--s3)}
+.card-title{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s3)}
+.card-title h2{margin:0}
+.soft{background:var(--soft);border-radius:var(--r-sm);padding:var(--s4)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.side{display:grid;grid-template-columns:1fr 320px;gap:var(--s5);align-items:start}
+.side>aside{position:sticky;top:84px}
+
+/* 위저드(단계 안 진행 표시) — 숫자와 이름만 */
+.wiz{display:flex;gap:var(--s5);margin-bottom:var(--s5);font-size:13px;color:var(--muted)}
+.wiz li{display:flex;align-items:center;gap:6px}
+.wiz li b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line-2);font-size:11px;font-weight:700}
+.wiz li.done b{background:var(--chip);border-color:var(--chip);color:var(--muted)}
+.wiz li.now{color:var(--ink);font-weight:600}
+.wiz li.now b{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* 수치 줄(시안 A stat-row) */
+.stat-row{display:grid;grid-template-columns:repeat(var(--n,4),1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
+.stat-row div{padding:var(--s4) var(--s5)}
+.stat-row div+div{border-left:1px solid var(--line)}
+.stat-row dt{font-size:13px;color:var(--muted)}
+.stat-row dd{font-size:24px;font-weight:700;color:var(--ink);line-height:1.35;font-variant-numeric:tabular-nums}
+.stat-row dd small{font-size:14px;font-weight:500;color:var(--muted);margin-left:2px}
+.stat-row .key{background:var(--brand-soft)}
+.stat-row .key dd{color:var(--brand-dark)}
+.stat-row .warn dd{color:var(--warn)}
+
+/* 금액 줄(시안 A fee-calc) */
+.fee div{display:flex;justify-content:space-between;padding:var(--s2) 0;border-bottom:1px dashed var(--line);font-size:14px}
+.fee dt{color:var(--muted)} .fee dd{font-weight:600;color:var(--ink)}
+.fee .total{border-bottom:0;padding-top:var(--s3)}
+.fee .total dt{color:var(--ink);font-weight:600}
+.fee .total dd{color:var(--brand-dark);font-size:20px}
+
+/* 칩·배지 */
+.chips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.chip{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--line-2);background:var(--surface);font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-dark);font-weight:600}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;border-radius:var(--r-pill);padding:2px 10px;background:var(--chip);color:var(--text);white-space:nowrap}
+.tag.brand{background:var(--brand-soft);color:var(--brand-dark)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.teal{background:var(--teal-soft);color:var(--teal)}
+/* 근거 수준: 점 하나 + 글자. 자기기입(회색) < 연동 확인(블루) < 운영 확인(초록), 미확인(황토) */
+.ev{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap}
+.ev::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ev-self{color:var(--muted)} .ev-link{color:var(--brand)} .ev-ops{color:var(--ok)} .ev-none{color:var(--warn)}
+/* 이 게임 첫 이용자(시안 A verified 모양) */
+.first{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--brand-dark)}
+.first::before{content:"✓";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--brand);color:#fff;font-size:10px}
+
+/* 아바타(채도 낮춘 6색) */
+.av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+.av-lg{width:64px;height:64px;font-size:24px}
+.a1{background:#5C77C9}.a2{background:#4B8C8D}.a3{background:#7C6CB8}.a4{background:#B9728A}.a5{background:#6C7380}.a6{background:#B48A45}
+
+/* 선택 카드 */
+.opts{display:grid;gap:var(--s3)}
+.opt{display:flex;gap:var(--s3);align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-card);padding:var(--s4);cursor:pointer}
+.opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex-shrink:0;margin-top:3px;position:relative}
+.opt[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.opt[aria-pressed="true"] .dot{border-color:var(--brand)}
+.opt[aria-pressed="true"] .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--brand)}
+.opt strong{display:block;color:var(--ink);font-size:15px}
+.opt p{font-size:13px;color:var(--muted)}
+
+/* 입력 */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font-size:14px;font-weight:600;color:var(--ink)}
+.input,.select,.textarea{width:100%;height:44px;border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);padding:0 var(--s3);color:var(--ink)}
+.textarea{height:auto;min-height:110px;padding:var(--s3);resize:vertical;line-height:1.65}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--brand)}
+.help{font-size:12px;color:var(--muted)}
+.check{display:flex;gap:var(--s2);align-items:flex-start;font-size:14px;cursor:pointer}
+.check input{accent-color:var(--brand);width:17px;height:17px;margin-top:3px;flex-shrink:0}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--r-pill);overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;font-size:14px;padding:7px 16px;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--brand-soft);color:var(--brand-dark);font-weight:600}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:var(--r-pill);overflow:hidden;background:var(--surface)}
+.stepper button{width:38px;height:38px;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer}
+.stepper output{min-width:36px;text-align:center;font-weight:700;color:var(--ink)}
+.switch{position:relative;width:42px;height:24px;border-radius:999px;background:var(--line-2);border:0;cursor:pointer;flex-shrink:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--brand)}
+.switch[aria-checked="true"]::after{transform:translateX(18px)}
+
+/* 목록 */
+.list>li{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+.list>li:last-child{border-bottom:0}
+.list strong{color:var(--ink);font-size:14px;font-weight:600}
+.list .end{margin-left:auto}
+.lines li{display:flex;align-items:center;gap:var(--s3);padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.lines li:last-child{border-bottom:0}
+.lines li>span:first-child{color:var(--muted);width:96px;flex-shrink:0}
+.lines li b{color:var(--ink);font-weight:600}
+.lines li .ev,.lines li .tag{margin-left:auto}
+.ticks li{position:relative;padding-left:22px;font-size:14px;margin:6px 0}
+.ticks li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700}
+.ticks li.q::before{content:"!";color:var(--warn)}
+
+/* 막대(시안 A rating-bars) */
+.bar{height:8px;background:var(--chip);border-radius:var(--r-pill);overflow:hidden}
+.bar i{display:block;height:100%;width:var(--v);background:var(--brand);border-radius:inherit}
+.bar.t i{background:var(--teal)}
+.comp{display:flex;height:34px;border-radius:var(--r-sm);overflow:hidden;gap:3px}
+.comp>div{display:flex;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:13px;font-weight:600;transition:flex .3s;white-space:nowrap;min-width:0}
+.comp .g1{background:var(--teal)} .comp .g2{background:var(--brand)}
+
+/* 인용(시안 A feedback) */
+.quote{border-left:3px solid var(--brand-line);background:var(--soft);padding:var(--s4) var(--s5);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink)}
+.quote footer{font-size:13px;color:var(--muted);margin-top:var(--s2)}
+
+/* 타임라인 */
+.tl li{position:relative;padding:0 0 var(--s4) 26px;font-size:14px}
+.tl li::before{content:"";position:absolute;left:6px;top:18px;bottom:0;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl li::after{content:"";position:absolute;left:0;top:5px;width:14px;height:14px;border-radius:50%;background:var(--surface);border:2px solid var(--line-2)}
+.tl li.done::after{background:var(--ok);border-color:var(--ok)}
+.tl li.now::after{background:var(--surface);border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.tl strong{display:block;color:var(--ink);font-weight:600}
+.tl small{color:var(--muted);font-size:13px}
+
+/* 알림 띠 */
+.notice{display:flex;align-items:center;gap:var(--s3);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:var(--r-sm);padding:var(--s3) var(--s4);font-size:14px}
+.notice.warn{border-left-color:var(--warn)}
+.notice.ok{border-left-color:var(--ok)}
+.notice b{color:var(--ink)}
+.notice .btn{margin-left:auto}
+
+/* 하단 버튼 줄 */
+.actions{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s5)}
+.actions .right{margin-left:auto;display:flex;gap:var(--s2)}
+.action-bar{position:sticky;bottom:16px;z-index:10;display:flex;align-items:center;gap:var(--s2);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);padding:8px 8px 8px var(--s5);box-shadow:0 6px 20px rgba(38,42,49,.07);margin-top:var(--s5)}
+.action-bar .msg{font-size:14px;color:var(--muted)}
+.action-bar .msg b{color:var(--ink)}
+.action-bar .right{margin-left:auto;display:flex;gap:var(--s2)}
+
+/* 완료 화면 */
+.complete{text-align:center;padding:var(--s6) 0 var(--s5)}
+.done-ic{width:60px;height:60px;border-radius:50%;margin:0 auto var(--s4);display:grid;place-items:center;background:var(--ok-soft);color:var(--ok);font-size:28px;font-weight:700}
+.complete h1{font-size:26px}
+.complete p{color:var(--muted);margin-top:var(--s2)}
+.next-link{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);border:1px dashed var(--line-2);border-radius:var(--r-card);padding:var(--s4) var(--s5);margin-top:var(--s5);font-size:14px}
+.next-link small{display:block;font-size:12px;color:var(--muted)}
+.next-link b{color:var(--ink)}
+
+/* 접기 */
+details.more{border-top:1px solid var(--line);margin-top:var(--s4);padding-top:var(--s3)}
+details.more summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--brand-dark);list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:" ▾";font-size:11px}
+details.more[open] summary::after{content:" ▴"}
+details.more>div{margin-top:var(--s3)}
+
+/* 서랍 */
+.scrim{position:fixed;inset:0;background:rgba(38,42,49,.35);z-index:70}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);z-index:80;box-shadow:-8px 0 30px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.drawer>header{padding:var(--s5);border-bottom:1px solid var(--line)}
+.drawer>.body{padding:var(--s5);flex:1;overflow:auto;display:flex;flex-direction:column;gap:var(--s4)}
+.drawer>footer{padding:var(--s4) var(--s5);border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:var(--s2)}
+
+/* 토스트 */
+.toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,10px);opacity:0;z-index:90;background:#2E323A;color:#fff;font-size:14px;padding:10px 18px;border-radius:var(--r-pill);transition:all .25s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* 푸터 */
+.site-footer{border-top:1px solid var(--line);background:var(--surface);padding:var(--s5) 0;font-size:13px;color:var(--muted)}
+
+/* 데모 화면 전환(시안 A screen-switch) — H 키로 숨김 */
+.screen-switch{position:fixed;right:20px;bottom:20px;z-index:60;display:flex;align-items:center;gap:2px;background:#2E323A;padding:6px;border-radius:var(--r-pill);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.screen-switch .lbl{color:#A3A8B1;font-size:12px;padding:0 10px;white-space:nowrap}
+.screen-switch button,.screen-switch a{border:0;background:none;color:#E6E8EC;font-size:13px;font-weight:600;padding:7px 12px;border-radius:var(--r-pill);cursor:pointer}
+.screen-switch button[aria-current="true"]{background:var(--brand);color:#fff}
+.screen-switch a{color:#A3A8B1;padding:7px 10px}
+.screen-switch a:hover{color:#fff}
+.screen-switch .sep{width:1px;height:18px;background:#4A4F59;margin:0 4px}
+body.rec .screen-switch{display:none}
+
+@media (max-width:960px){
+  .main-nav{display:none}
+  .side,.two{grid-template-columns:1fr}
+  .side>aside{position:static}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .stat-row div:nth-child(3){border-left:0}
+  .wiz li span{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ───────── 01 단계 전용 ───────── */
+
+.join{display:grid;grid-template-columns:1fr 420px;gap:var(--s7);align-items:center;min-height:calc(100vh - 260px)}
+.join h1{font-size:40px;line-height:1.25}
+.join h1 em{font-style:normal;color:var(--brand)}
+.join .lead{font-size:17px;color:var(--muted);margin-top:var(--s4);max-width:440px}
+.game li{display:flex;align-items:center;gap:var(--s3);padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.game li:last-child{border-bottom:0}
+.game .cv{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.game strong{color:var(--ink);font-weight:600}
+.game .end{margin-left:auto;color:var(--muted)}
+.lv li{display:flex;align-items:center;gap:var(--s4);padding:14px 0;border-bottom:1px solid var(--line)}
+.lv li:last-child{border-bottom:0}
+.lv strong{color:var(--ink);width:110px;flex-shrink:0}
+.lv .seg{margin-left:auto}
+.sub{display:flex;align-items:center;gap:var(--s2);font-size:13px;color:var(--muted);padding:0 0 14px 126px;margin-top:-6px;border-bottom:1px solid var(--line)}
+.sched{display:grid;grid-template-columns:52px repeat(7,1fr);gap:4px;font-size:12px;color:var(--muted);text-align:center}
+.sched span:nth-child(8n+1){text-align:left}
+.sched button{height:30px;border-radius:7px;border:1px solid var(--line);background:var(--soft);cursor:pointer}
+.sched button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand)}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.steam-btn{background:#2B3440;color:#fff}
+.steam-btn:hover{background:#222932}
+.linked .pre-link{display:none}
+.post-link{display:none}
+.linked .post-link{display:flex}
+.linked .after-ev{color:var(--brand)}
+
+</style>
+</head>
+<body data-step="01">
+<div class="role-bar" aria-label="현재 사용자"><div class="wrap"><span class="">개발사</span><span class="on">테스터</span></div></div>
+<header class="site-header"><div class="wrap header-inner">
+  <a class="logo" href="#"><span class="logo-mark"></span>PlayFit</a><div class="account"><a class="btn btn-sm btn-outline" href="#">로그인</a></div>
+</div></header>
+<main class="wrap">
+<!-- 01-01 회원가입·역할 선택 -->
+<section class="screen" id="s1" data-title="회원가입·역할 선택">
+  <div class="join">
+    <div>
+      <h1>내 게임 경험이<br><em>맞는 테스트 기회</em>가 됩니다</h1>
+      <p class="lead">플레이한 게임과 환경을 한 번 등록하면, 조건이 맞는 테스트 제안을 받을 수 있어요.</p>
+    </div>
+    <div class="card card-lg stack">
+      <h2 style="font-size:19px;margin:0">어떤 목적으로 가입하나요?</h2>
+      <div class="opts" style="grid-template-columns:1fr 1fr" data-group>
+        <button class="opt" data-pick aria-pressed="true"><span class="dot"></span><span><strong>테스터</strong><p>게임하고 피드백</p></span></button>
+        <button class="opt" data-pick aria-pressed="false"><span class="dot"></span><span><strong>개발사</strong><p>테스트 의뢰</p></span></button>
+      </div>
+      <div class="field"><label>이메일</label><input class="input" value="skyrunner@example.com"></div>
+      <div class="field"><label>닉네임</label><input class="input" value="하늘런너"></div>
+      <label class="check"><input type="checkbox" checked> [필수] 약관·개인정보 처리방침 동의</label>
+      <button class="btn btn-primary btn-lg btn-block" data-next>테스터로 시작하기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 01-02 게임·장르 -->
+<section class="screen" id="s2" data-title="게임·장르" hidden>
+  <ol class="wiz"><li class="now"><b>1</b><span>게임·장르</span></li><li><b>2</b><span>경험 수준</span></li><li><b>3</b><span>환경·일정</span></li><li><b>4</b><span>Steam 연동</span></li><li><b>5</b><span>완료</span></li></ol>
+  <div class="narrow">
+    <div class="page-head"><h1>어떤 게임을 플레이했나요?</h1><p>3개 이상 골라 주세요.</p></div>
+    <div class="card">
+      <input class="input" placeholder="게임 이름 검색">
+      <ul class="game mt2">
+        <li><span class="cv a2">SV</span><strong>스타듀 밸리</strong><span class="muted small">시뮬레이션</span><span class="end">120시간</span></li>
+        <li><span class="cv a4">OW</span><strong>오버워치 2</strong><span class="muted small">FPS</span><span class="end">300시간</span></li>
+        <li><span class="cv a3">HD</span><strong>하데스</strong><span class="muted small">로그라이크</span><span class="end">2시간</span></li>
+      </ul>
+    </div>
+    <h2 class="mt3 mb2" style="font-size:17px">관심 있는 장르</h2>
+    <div class="chips">
+      <button class="chip" data-toggle aria-pressed="true">로그라이크</button><button class="chip" data-toggle aria-pressed="true">액션</button><button class="chip" data-toggle aria-pressed="true">시뮬레이션</button><button class="chip" data-toggle aria-pressed="false">RPG</button><button class="chip" data-toggle aria-pressed="false">FPS</button><button class="chip" data-toggle aria-pressed="false">퍼즐</button><button class="chip" data-toggle aria-pressed="false">전략</button>
+    </div>
+    <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+  </div>
+</section>
+
+<!-- 01-03 경험 수준 -->
+<section class="screen" id="s3" data-title="경험 수준" hidden>
+  <ol class="wiz"><li class="done"><b>1</b><span>게임·장르</span></li><li class="now"><b>2</b><span>경험 수준</span></li><li><b>3</b><span>환경·일정</span></li><li><b>4</b><span>Steam 연동</span></li><li><b>5</b><span>완료</span></li></ol>
+  <div class="narrow">
+    <div class="page-head"><h1>장르별 경험 수준</h1><p>서툰 장르도 중요해요. 처음 하는 사람의 반응이 필요한 테스트가 많아요.</p></div>
+    <div class="card">
+      <ul class="lv">
+        <li><strong>로그라이크</strong><span class="seg" data-group><button data-pick aria-pressed="false">처음</button><button data-pick aria-pressed="true">초보</button><button data-pick aria-pressed="false">경험자</button><button data-pick aria-pressed="false">숙련자</button></span></li>
+      </ul>
+      <div class="sub">도달 경험 <span class="seg" data-group><button data-pick aria-pressed="true">첫 보스 전</button><button data-pick aria-pressed="false">보스 처치</button><button data-pick aria-pressed="false">클리어</button></span></div>
+      <ul class="lv">
+        <li><strong>시뮬레이션</strong><span class="seg" data-group><button data-pick aria-pressed="false">처음</button><button data-pick aria-pressed="false">초보</button><button data-pick aria-pressed="false">경험자</button><button data-pick aria-pressed="true">숙련자</button></span></li>
+        <li><strong>FPS</strong><span class="seg" data-group><button data-pick aria-pressed="false">처음</button><button data-pick aria-pressed="false">초보</button><button data-pick aria-pressed="true">경험자</button><button data-pick aria-pressed="false">숙련자</button></span></li>
+      </ul>
+    </div>
+    <p class="help mt2">초보 10시간 미만 · 경험자 클리어 경험 · 숙련자 고난도 도전</p>
+    <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+  </div>
+</section>
+
+<!-- 01-04 환경·일정 -->
+<section class="screen" id="s4" data-title="환경·일정" hidden>
+  <ol class="wiz"><li class="done"><b>1</b><span>게임·장르</span></li><li class="done"><b>2</b><span>경험 수준</span></li><li class="now"><b>3</b><span>환경·일정</span></li><li><b>4</b><span>Steam 연동</span></li><li><b>5</b><span>완료</span></li></ol>
+  <div class="page-head"><h1>플레이 환경과 참여 가능 시간</h1></div>
+  <div class="two" style="align-items:start">
+    <div class="card stack">
+      <div class="card-title" style="margin:0"><h2>환경</h2><button class="btn btn-sm btn-outline" data-toast="사양을 불러왔어요">사양 자동 입력</button></div>
+      <div class="two"><div class="field"><label>OS</label><select class="select"><option>Windows 11</option></select></div><div class="field"><label>그래픽카드</label><select class="select"><option>RTX 3060</option></select></div></div>
+      <div class="field"><span class="label">입력 장치</span><div class="chips"><button class="chip" data-toggle aria-pressed="true">키보드·마우스</button><button class="chip" data-toggle aria-pressed="false">컨트롤러</button></div></div>
+      <div class="field"><span class="label">언어</span><div class="chips"><button class="chip" data-toggle aria-pressed="true">한국어</button><button class="chip" data-toggle aria-pressed="false">영어</button></div></div>
+    </div>
+    <div class="card">
+      <h2>참여 가능 시간</h2>
+      <div class="sched" id="sched"></div>
+      <p class="help mt2">제안마다 일정은 다시 확인해요.</p>
+    </div>
+  </div>
+  <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-primary" data-next>다음</button></div></div>
+</section>
+
+<!-- 01-05 Steam 연동 -->
+<section class="screen" id="s5" data-title="Steam 연동" hidden>
+  <ol class="wiz"><li class="done"><b>1</b><span>게임·장르</span></li><li class="done"><b>2</b><span>경험 수준</span></li><li class="done"><b>3</b><span>환경·일정</span></li><li class="now"><b>4</b><span>Steam 연동</span></li><li><b>5</b><span>완료</span></li></ol>
+  <div class="narrow" id="steamWrap">
+    <div class="page-head"><span class="tag">선택 항목</span><h1 class="mt2">Steam을 연동하면 근거가 올라가요</h1><p>연동하지 않아도 제안은 그대로 받을 수 있어요.</p></div>
+    <div class="card">
+      <ul class="lines">
+        <li><span>플레이한 게임</span><b>3개 → 87개</b><span class="ev ev-self after-ev">자기기입 → 연동 확인</span></li>
+        <li><span>로그라이크</span><b>2시간 → 2.6시간</b><span class="ev ev-self after-ev">자기기입 → 연동 확인</span></li>
+      </ul>
+      <div class="pre-link mt3"><button class="btn btn-lg btn-block steam-btn" id="steamBtn">Steam으로 로그인해 연동</button><p class="help mt2" style="text-align:center">비밀번호는 플레이핏에 저장되지 않아요.</p></div>
+      <div class="post-link notice ok mt3"><span><b>연동됐어요.</b> 보유 게임 87개, 로그라이크 2.6시간을 확인했어요.</span></div>
+    </div>
+    <div class="actions"><button class="btn btn-text" data-prev>이전</button><div class="right"><button class="btn btn-outline" data-next>나중에</button><button class="btn btn-primary" data-next>다음</button></div></div>
+  </div>
+</section>
+
+<!-- 01-06 프로필 완료 -->
+<section class="screen" id="s6" data-title="프로필 완료" hidden>
+  <div class="narrow">
+    <div class="complete" style="padding-top:var(--s4)"><div class="done-ic">✓</div><h1>프로필이 완성됐어요</h1><p>조건이 맞는 제안이 오면 알려 드릴게요.</p></div>
+    <div class="card">
+      <div class="row mb2"><span class="av av-lg a1">하</span><div><h2 style="font-size:20px;margin:0">하늘런너</h2><span class="tag teal">로그라이크 초보</span></div></div>
+      <h3 class="small muted" style="font-weight:600">개발사에게 이렇게 보여요</h3>
+      <ul class="lines">
+        <li><span>로그라이크</span><b>초보 · 2.6시간</b><span class="ev ev-link">연동 확인</span></li>
+        <li><span>PC 환경</span><b>Windows 11 · RTX 3060</b><span class="ev ev-self">자기기입</span></li>
+        <li><span>입력·언어</span><b>키보드·마우스 · 한국어</b><span class="ev ev-self">자기기입</span></li>
+        <li><span>참여 시간</span><b>평일 저녁</b><span class="ev ev-self">자기기입</span></li>
+        <li><span>테스트 이력</span><b>0회</b><span class="ev ev-ops">운영 확인</span></li>
+      </ul>
+      <p class="help mt2">근거 수준: <span class="ev ev-self">자기기입</span> · <span class="ev ev-link">연동 확인</span> · <span class="ev ev-ops">운영 확인</span> (첫 테스트를 마치면 운영 확인이 늘어요)</p>
+    </div>
+    <a class="next-link" href="../../02_request-create/prototypes/02_request-create_v1.html"><span><small>데모 다음 단계 · 개발사</small><b>02 의뢰 작성</b></span><span class="btn btn-sm btn-outline">이어서 보기 →</span></a>
+  </div>
+</section>
+</main>
+<footer class="site-footer"><div class="wrap">© 2028 PlayFit · 데모 화면(가상 데이터)</div></footer>
+<nav class="screen-switch" aria-label="데모 화면 전환"><span class="lbl">01 테스터 프로필 등록</span><span class="tabs"></span><a href="../../02_request-create/prototypes/02_request-create_v1.html" title="다음 단계">02 ›</a></nav>
+<script>
+/* PlayFit 데모 공통 스크립트 v2 — 화면 전환, 데모 전환 버튼, 입력 요소 */
+(function(){
+  const screens=[...document.querySelectorAll('.screen')];
+  const tabs=document.querySelector('.screen-switch .tabs');
+  const no=document.body.dataset.step;
+  let cur=0;
+  screens.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.type='button';b.textContent=no+'-'+String(i+1).padStart(2,'0');b.title=s.dataset.title;
+    b.addEventListener('click',()=>show(i));tabs.appendChild(b);
+  });
+  function show(i){
+    i=Math.max(0,Math.min(screens.length-1,i));
+    screens.forEach((s,k)=>s.hidden=k!==i);
+    [...tabs.children].forEach((b,k)=>b.setAttribute('aria-current',k===i));
+    cur=i;history.replaceState(null,'','#'+(i+1));
+    window.scrollTo({top:0,behavior:'instant'});
+    document.querySelectorAll('.drawer,.scrim').forEach(d=>d.hidden=true);
+    document.dispatchEvent(new CustomEvent('pf:screen',{detail:{index:i}}));
+  }
+  let tt;
+  function toast(msg){
+    let t=document.querySelector('.toast');
+    if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}
+    t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2000);
+  }
+  document.addEventListener('click',e=>{
+    const el=e.target.closest('[data-next],[data-prev],[data-go],[data-toggle],[data-pick],.switch,[data-inc],[data-toast],[data-open],[data-close]');
+    if(!el)return;
+    if(el.matches('a[href="#"]'))e.preventDefault();
+    if(el.hasAttribute('data-toggle'))el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')!=='true');
+    if(el.hasAttribute('data-pick')){const g=el.closest('[data-group]');(g?g.querySelectorAll('[data-pick]'):[el]).forEach(o=>o.setAttribute('aria-pressed',o===el))}
+    if(el.classList.contains('switch'))el.setAttribute('aria-checked',el.getAttribute('aria-checked')!=='true');
+    if(el.hasAttribute('data-inc')){
+      const o=el.parentElement.querySelector('output');
+      o.textContent=Math.max(+(o.dataset.min||0),Math.min(+(o.dataset.max||99),+o.textContent+ +el.dataset.inc));
+      o.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    if(el.hasAttribute('data-open'))document.querySelectorAll('[data-layer="'+el.dataset.open+'"]').forEach(d=>d.hidden=false);
+    if(el.hasAttribute('data-close'))document.querySelectorAll('.drawer,.scrim').forEach(d=>d.hidden=true);
+    if(el.hasAttribute('data-toast'))toast(el.dataset.toast);
+    if(el.hasAttribute('data-next'))show(cur+1);
+    if(el.hasAttribute('data-prev'))show(cur-1);
+    if(el.hasAttribute('data-go'))show(+el.dataset.go-1);
+    document.dispatchEvent(new CustomEvent('pf:change',{detail:{el}}));
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.target.matches('input,textarea,select'))return;
+    if(e.key==='ArrowRight')show(cur+1);
+    else if(e.key==='ArrowLeft')show(cur-1);
+    else if(e.key==='h'||e.key==='H'||e.key==='ㅗ')document.body.classList.toggle('rec');
+    else if(e.key==='Escape')document.querySelectorAll('.drawer,.scrim').forEach(d=>d.hidden=true);
+  });
+  addEventListener('hashchange',()=>{const n=parseInt(location.hash.slice(1),10);if(n>0&&n-1!==cur)show(n-1)});
+  window.PF={show,toast,get cur(){return cur}};
+  const h=parseInt(location.hash.slice(1),10);show(h>0?h-1:0);
+})();
+
+
+(function(){
+  const g=document.getElementById('sched'),days=['월','화','수','목','금','토','일'],slots=['오전','오후','저녁','심야'];
+  g.insertAdjacentHTML('beforeend','<span></span>'+days.map(d=>'<span>'+d+'</span>').join(''));
+  slots.forEach((s,si)=>{g.insertAdjacentHTML('beforeend','<span>'+s+'</span>');days.forEach((d,di)=>g.insertAdjacentHTML('beforeend','<button data-toggle aria-pressed="'+((si===2&&di<5)||(si===1&&di>=5))+'" aria-label="'+d+' '+s+'"></button>'))});
+  document.getElementById('steamBtn').addEventListener('click',()=>{const w=document.getElementById('steamWrap');w.classList.add('linked');w.querySelectorAll('.after-ev').forEach(e=>{e.className='ev ev-link after-ev';e.textContent='연동 확인'});PF.toast('Steam 연동 완료')});
+})();
+
+</script>
+</body>
+</html>
